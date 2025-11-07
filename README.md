@@ -1,5 +1,7 @@
 # UserForms-Class-TextBox-Masks
 
+![User Forms Example](User_Forms.png)
+
 ## Description
 This project contains the `clsTextboxMask` class for Microsoft VBA, which allows creating textboxes with input masks in UserForms. The class provides input validation, placeholder display, and visual indicators of the field filling status.
 
