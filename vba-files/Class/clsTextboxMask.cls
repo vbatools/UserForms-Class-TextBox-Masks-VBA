@@ -12,34 +12,34 @@ Option Explicit
 ' Class:         clsTextboxMask
 ' Author:        VBATools
 ' Version:       1.0.3
-' Creation Date: 11.05.2025 10:30
+' Creation Date: 05.11.2025 10:30
 ' Update Date:   07.11.2025 16:50
 ' License:       Apache License
-' Description:   Класс для создания текстовых полей с масками ввода в VBA.
-'              Поддерживает различные типы масок: цифровые, буквенные, даты,
-'              телефонные номера и т.д. Обеспечивает проверку ввода, отображение
-'              заполнителя и визуальное обозначение состояния заполнения поля.
+' Description:   Class for creating textboxes with input masks in VBA.
+'              Supports various mask types: numeric, letters, dates,
+'              phone numbers, etc. Provides input validation, placeholder display, and
+'              visual indication of field fill status.
 '
-'              Класс позволяет создавать валидированные текстовые поля с заданными
-'              ограничениями на вводимые данные. Поддерживает следующие типы масок:
-'              - Цифровые (с возможностью задания диапазона, знака, дробности)
-'              - Даты (с проверкой корректности даты и диапазона)
-'              - Время (с проверкой корректности времени)
-'              - Текстовые с фиксированной длиной (с различными типами символов)
+'              The class allows creating validated text fields with specified
+'              constraints on input data. Supports the following mask types:
+'              - Numeric (with range, sign, and decimal options)
+'              - Dates (with date validity and range checks)
+'              - Time (with time validity checks)
+'              - Fixed-length text (with various character types)
 '
-'              Каждое поле с маской имеет визуальные индикаторы: цвет границы
-'              изменяется в зависимости от валидности введенных данных, а также
-'              отображается подсказка-заполнитель с ожидаемым форматом.
+'              Each masked field has visual indicators: border color
+'              changes depending on the validity of input data, and
+'              a placeholder hint with the expected format is displayed.
 ' ======================================================================================
 ' Enum:          enumTypeMask
-' Description:   Перечисление типов масок, поддерживаемых классом
+' Description:   Enumeration of mask types supported by the class
 ' Values:
-'   tOtherFix - Текстовая маска с фиксированной длиной (буквы, цифры, специальные символы)
-'   tDateFix  - Маска для ввода даты с фиксированной длиной
-'   tTimeFix  - Маска для ввода времени с фиксированной длиной
-'   tNumeric  - Цифровая маска с возможностью задания диапазона, знака и дробности
-'   [_First]  - Вспомогательное значение для определения начала перечисления
-'   [_Last]   - Вспомогательное значение для определения конца перечисления
+'   tOtherFix - Fixed-length text mask (letters, numbers, special characters)
+'   tDateFix  - Fixed-length date input mask
+'   tTimeFix  - Fixed-length time input mask
+'   tNumeric  - Numeric mask with range, sign and decimal options
+'   [_First]  - Helper value to determine the start of the enumeration
+'   [_Last]   - Helper value to determine the end of the enumeration
 Public Enum enumTypeMask
     tOtherFix = 1
     tDateFix
@@ -49,7 +49,7 @@ Public Enum enumTypeMask
     [_Last] = tNumeric
 End Enum
 
-Private Const SIMVOLS_MASKS As String = "#*@A��"
+Private Const SIMVOLS_MASKS As String = "#*@AБб"
 Private Const COLOR_DEFAULT_ON As Long = &H80000006
 Private Const COLOR_DEFAULT_OFF As Long = &HC0C0FF
 Private Const COLOR_DEFAULT_HOLDER As Long = &H808080
@@ -63,8 +63,8 @@ Private mItems      As Collection
 Private mMask       As String
 Private mFormatValue As String
 
-Private mBorderColorOn As Long
-Private mBorderColorOff As Long
+Private mBorderColorValid As Long
+Private mBorderColorNoValid As Long
 
 Private mIsDecemal  As Boolean
 Private mIsNegative As Boolean
@@ -75,20 +75,20 @@ Private mMax        As Single
 Private mCurrentMaskType As enumTypeMask
 
 ' Property:      constSimvolsMasks
-' Description:   Возвращает строку символами масок, используемых в классе
-' Returns:       Строка "#*@A" содержащая символы масок:
-'                # - цифры, @ - латинские буквы, * - любые символы,
-'                A - латинские буквы и цифры,  - кириллические буквы,
-'                - кириллические буквы и цифры
+' Description:   Returns a string with mask characters used in the class
+' Returns:       String "#*@A" containing mask characters:
+'                # - digits, @ - Latin letters, * - any characters,
+'                A - Latin letters and digits, Б - Cyrillic letters,
+'                б - Cyrillic letters and digits
 Public Property Get constSimvolsMasks() As String
     constSimvolsMasks = SIMVOLS_MASKS
 End Property
 
 ' Property:      Min
-' Description:   Свойство для получения и установки минимального значения
-'                для числовых масок. Используется при валидации ввода.
+' Description:   Property to get and set the minimum value
+'                for numeric masks. Used during input validation.
 ' Returns/Parameters:
-'   Value - Значение минимального допустимого числа для числовых масок
+'   Value - Value of the minimum allowed number for numeric masks
 Public Property Get Min() As Single
     Min = mMin
 End Property
@@ -98,10 +98,10 @@ Public Property Let Min(ByVal Value As Single)
 End Property
 
 ' Property:      Max
-' Description:   Свойство для получения и установки максимального значения
-'                для числовых масок. Используется при валидации ввода.
+' Description:   Property to get and set the maximum value
+'                for numeric masks. Used during input validation.
 ' Returns/Parameters:
-'   Value - Значение максимального допустимого числа для числовых масок
+'   Value - Value of the maximum allowed number for numeric masks
 Public Property Get Max() As Single
     Max = mMax
 End Property
@@ -111,10 +111,10 @@ Public Property Let Max(ByVal Value As Single)
 End Property
 
 ' Property:      visibleLabelHolder
-' Description:   Свойство для получения и установки видимости подсказки-заполнителя
-'                для текстового поля. Подсказка отображает маску ввода.
+' Description:   Property to get and set the visibility of the placeholder hint
+'                for the text field. The hint displays the input mask.
 ' Returns/Parameters:
-'   Value - Логическое значение (True/False), определяющее видимость подсказки
+'   Value - Boolean value (True/False) determining the visibility of the hint
 Public Property Get visibleLabelHolder() As Boolean
     If Me.LabelHolder Is Nothing Then Exit Property
     visibleLabelHolder = Me.LabelHolder.Visible
@@ -126,10 +126,10 @@ Public Property Let visibleLabelHolder(ByVal Value As Boolean)
 End Property
 
 ' Property:      IsNegative
-' Description:   Свойство для получения и установки разрешения ввода отрицательных
-'                значений для числовых масок.
+' Description:   Property to get and set permission for input of negative
+'                values for numeric masks.
 ' Returns/Parameters:
-'   Value - Логическое значение (True/False), разрешающее ввод отрицательных чисел
+'   Value - Boolean value (True/False) allowing input of negative numbers
 Public Property Get IsNegative() As Boolean
     IsNegative = mIsNegative
 End Property
@@ -139,10 +139,10 @@ Public Property Let IsNegative(ByVal Value As Boolean)
 End Property
 
 ' Property:      IsDecemal
-' Description:   Свойство для получения и установки разрешения ввода десятичных
-'                (дробных) значений для числовых масок.
+' Description:   Property to get and set permission for input of decimal
+'                (fractional) values for numeric masks.
 ' Returns/Parameters:
-'   Value - Логическое значение (True/False), разрешающее ввод дробных чисел
+'   Value - Boolean value (True/False) allowing input of fractional numbers
 Public Property Get IsDecemal() As Boolean
     IsDecemal = mIsDecemal
 End Property
@@ -176,19 +176,19 @@ Public Property Set Items(ByRef Items As Collection)
 End Property
 
 ' Property:      PlaceHolder
-' Description:   Свойство для получения строки-заполнителя, которая отображается
-'                в подсказке до тех пор, пока текстовое поле не будет полностью заполнено
-' Returns:       Строка, содержащая текущее значение поля плюс оставшуюся часть маски
+' Description:   Property to get the placeholder string that is displayed
+'                in the hint until the text field is completely filled
+' Returns:       String containing the current field value plus the remaining part of the mask
 Public Property Get PlaceHolder() As String
     If Me.TextBox Is Nothing Then Exit Property
     If Me.LenMask > Me.LenValue Then PlaceHolder = Me.Value & VBA.Mid$(Me.Mask, Me.LenValue + 1, Me.LenMask - Me.LenValue)
 End Property
 
 ' Property:      CurrentMaskType
-' Description:   Свойство для получения и установки текущего типа маски ввода
-'                для данного экземпляра класса
+' Description:   Property to get and set the current input mask type
+'                for this class instance
 ' Returns/Parameters:
-'   maskType - Значение из перечисления enumTypeMask, определяющее тип маски
+'   maskType - Value from the enumTypeMask enumeration defining the mask type
 Public Property Get CurrentMaskType() As enumTypeMask
     CurrentMaskType = mCurrentMaskType
 End Property
@@ -198,18 +198,18 @@ Public Property Let CurrentMaskType(ByVal maskType As enumTypeMask)
 End Property
 
 ' Property:      LenValue
-' Description:   Свойство для получения текущей длины введенного значения
-'                в текстовом поле
-' Returns:       Целое число, представляющее количество символов в текущем значении
+' Description:   Property to get the current length of the entered value
+'                in the text field
+' Returns:       Integer representing the number of characters in the current value
 Public Property Get LenValue() As Integer
     If Me.TextBox Is Nothing Then Exit Property
     LenValue = VBA.Len(Me.Value)
 End Property
 
 ' Property:      Value
-' Description:   Свойство для получения и установки значения текстового поля
+' Description:   Property to get and set the value of the text field
 ' Returns/Parameters:
-'   Value - Строка, представляющая значение текстового поля
+'   Value - String representing the value of the text field
 Public Property Let Value(ByRef Value As String)
     If Me.TextBox Is Nothing Then Exit Property
     Me.TextBox.Value = Value
@@ -221,11 +221,11 @@ Public Property Get Value() As String
 End Property
 
 ' Property:      Mask
-' Description:   Свойство для получения и установки маски ввода для текстового поля
+' Description:   Property to get and set the input mask for the text field
 ' Returns/Parameters:
-'   Mask - Строка, определяющая маску ввода с использованием специальных символов:
-'          # (цифры), @ (латинские буквы), * (любые символы), A (латинские буквы и цифры),
-'          (кириллические буквы),  (кириллические буквы и цифры)
+'   Mask - String defining the input mask using special characters:
+'          # (digits), @ (Latin letters), * (any characters), A (Latin letters and digits),
+'          Б (Cyrillic letters), б (Cyrillic letters and digits)
 Public Property Let Mask(ByRef Mask As String)
     mMask = Mask
 End Property
@@ -235,17 +235,17 @@ Public Property Get Mask() As String
 End Property
 
 ' Property:      LenMask
-' Description:   Свойство для получения длины маски ввода
-' Returns:       Целое число, представляющее количество символов в маске
+' Description:   Property to get the length of the input mask
+' Returns:       Integer representing the number of characters in the mask
 Public Property Get LenMask() As Integer
     LenMask = VBA.Len(Me.Mask)
 End Property
 
 ' Property:      formatValue
-' Description:   Свойство для получения и установки формата отображения значения
-'                после ввода (используется для дат и чисел)
+' Description:   Property to get and set the format for displaying the value
+'                after input (used for dates and numbers)
 ' Returns/Parameters:
-'   formatValue - Строка формата, определяющая, как будет отображаться значение
+'   formatValue - Format string defining how the value will be displayed
 Public Property Let formatValue(ByRef formatValue As String)
     mFormatValue = formatValue
 End Property
@@ -254,44 +254,44 @@ Public Property Get formatValue() As String
     formatValue = mFormatValue
 End Property
 
-' Property:      borderColorOn
-' Description:   Свойство для получения и установки цвета границы текстового поля
-'                при валидном вводе
+' Property:      borderColorValid
+' Description:   Property to get and set the border color of the text field
+'                when input is valid
 ' Returns/Parameters:
-'   Color - Значение цвета (Long), используемое для границы при валидном вводе
-Public Property Let borderColorOn(ByRef Color As Long)
-    mBorderColorOn = Color
+'   Color - Color value (Long) used for the border when input is valid
+Public Property Let borderColorValid(ByRef Color As Long)
+    mBorderColorValid = Color
 End Property
 
-Public Property Get borderColorOn() As Long
-    borderColorOn = mBorderColorOn
+Public Property Get borderColorValid() As Long
+    borderColorValid = mBorderColorValid
 End Property
 
-' Property:      borderColorOff
-' Description:   Свойство для получения и установки цвета границы текстового поля
-'                при невалидном вводе
+' Property:      borderColorNoValid
+' Description:   Property to get and set the border color of the text field
+'                when input is invalid
 ' Returns/Parameters:
-'   Color - Значение цвета (Long), используемое для границы при невалидном вводе
-Public Property Let borderColorOff(ByRef Color As Long)
-    mBorderColorOff = Color
+'   Color - Color value (Long) used for the border when input is invalid
+Public Property Let borderColorNoValid(ByRef Color As Long)
+    mBorderColorNoValid = Color
 End Property
 
-Public Property Get borderColorOff() As Long
-    borderColorOff = mBorderColorOff
+Public Property Get borderColorNoValid() As Long
+    borderColorNoValid = mBorderColorNoValid
 End Property
 
 ' Property:      Count
-' Description:   Свойство для получения количества элементов в коллекции
-'                масок ввода
-' Returns:       Байт, представляющий количество элементов в коллекции Items
+' Description:   Property to get the number of elements in the collection
+'                of input masks
+' Returns:       Byte representing the number of elements in the Items collection
 Public Property Get Count() As Byte
     Count = Me.Items.Count
 End Property
 
 ' Property:      RemainingChars
-' Description:   Свойство для получения количества оставшихся символов
-'                до полного заполнения текстового поля по маске
-' Returns:       Целое число, представляющее количество оставшихся символов
+' Description:   Property to get the number of remaining characters
+'                until the text field is completely filled according to the mask
+' Returns:       Integer representing the number of remaining characters
 Public Property Get RemainingChars() As Integer
     If Me.TextBox Is Nothing Then
         RemainingChars = Me.LenMask
@@ -301,11 +301,11 @@ Public Property Get RemainingChars() As Integer
 End Property
 
 ' Property:      getItemByIndex
-' Description:   Свойство для получения элемента из коллекции масок ввода по индексу
+' Description:   Property to get an item from the input masks collection by index
 ' Parameters:
-'   index - Целое число, представляющее индекс элемента в коллекции (начиная с 1)
-' Returns:       Объект clsTextboxMask, соответствующий указанному индексу,
-'                или Nothing, если элемент с таким индексом не существует
+'   index - Integer representing the index of the item in the collection (starting from 1)
+' Returns:       clsTextboxMask object corresponding to the specified index,
+'                or Nothing if an item with that index does not exist
 Public Property Get getItemByIndex(ByVal index As Integer) As clsTextboxMask
     On Error GoTo endGetItem
     Set getItemByIndex = Me.Items(index)
@@ -315,11 +315,11 @@ endGetItem:
 End Property
 
 ' Property:      getItemByName
-' Description:   Свойство для получения элемента из коллекции масок ввода по имени
+' Description:   Property to get an item from the input masks collection by name
 ' Parameters:
-'   Name - Строка, представляющая имя элемента в коллекции
-' Returns:       Объект clsTextboxMask, соответствующий указанному имени,
-'                или Nothing, если элемент с таким именем не существует
+'   Name - String representing the name of the item in the collection
+' Returns:       clsTextboxMask object corresponding to the specified name,
+'                or Nothing if an item with that name does not exist
 Public Property Get getItemByName(ByVal Name As String) As clsTextboxMask
     On Error GoTo endGetItem
     Set getItemByName = Me.Items(Name)
@@ -344,18 +344,18 @@ Public Property Get Version() As String
 End Property
 
 ' Method:        addItemNumeric
-' Description:   Добавляет новый элемент с числовым типом маски в коллекцию
+' Description:   Adds a new item with numeric mask type to the collection
 ' Parameters:
-'   TextBox         - Объект текстового поля для применения маски
-'   snMin           - Минимальное допустимое значение
-'   snMax           - Максимальное допустимое значение
-'   IsDecemal       - Флаг разрешения ввода дробных чисел
-'   IsNegative      - Флаг разрешения ввода отрицательных чисел
-'   visibleLabelHolder - (Опционально) Флаг видимости подсказки-заполнителя (по умолчанию True)
-'   formatNumeric   - (Опционально) Формат отображения числа (по умолчанию "#.0")
-'   borderColorOn   - (Опционально) Цвет границы при валидном вводе (по умолчанию COLOR_DEFAULT_ON)
-'   borderColorOff  - (Опционально) Цвет границы при невалидном вводе (по умолчанию COLOR_DEFAULT_OFF)
-'   foreColorHolder - (Опционально) Цвет текста подсказки (по умолчанию COLOR_DEFAULT_HOLDER)
+'   TextBox         - Textbox object to apply the mask to
+'   snMin           - Minimum allowed value
+'   snMax           - Maximum allowed value
+'   IsDecemal       - Flag allowing input of decimal numbers
+'   IsNegative      - Flag allowing input of negative numbers
+'   visibleLabelHolder - (Optional) Flag for placeholder hint visibility (default True)
+'   formatNumeric   - (Optional) Number display format (default "#.0")
+'   borderColorValid   - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   borderColorNoValid  - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   foreColorHolder - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
 Public Sub addItemNumeric(ByRef TextBox As MSForms.TextBox, _
         ByVal snMin As Single, _
         ByVal snMax As Single, _
@@ -363,105 +363,105 @@ Public Sub addItemNumeric(ByRef TextBox As MSForms.TextBox, _
         ByVal IsNegative As Boolean, _
         Optional visibleLabelHolder As Boolean = True, _
         Optional formatNumeric As String = "#.0", _
-        Optional borderColorOn As XlRgbColor = COLOR_DEFAULT_ON, _
-        Optional borderColorOff As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional borderColorValid As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional borderColorNoValid As XlRgbColor = COLOR_DEFAULT_OFF, _
         Optional foreColorHolder As XlRgbColor = COLOR_DEFAULT_HOLDER)
     Call addItem(TextBox, String$(WorksheetFunction.Max(VBA.Len(snMin), VBA.Len(snMax)), "#"), _
-            enumTypeMask.tNumeric, formatNumeric, IsDecemal, IsNegative, borderColorOn, borderColorOff, _
+            enumTypeMask.tNumeric, formatNumeric, IsDecemal, IsNegative, borderColorValid, borderColorNoValid, _
             snMin, snMax, visibleLabelHolder, foreColorHolder)
 End Sub
 
 ' Method:        addItemFixLenDate
-' Description:   Добавляет новый элемент с маской даты фиксированной длины в коллекцию
+' Description:   Adds a new item with fixed-length date mask to the collection
 ' Parameters:
-'   TextBox         - Объект текстового поля для применения маски
-'   Mask            - Строка маски для даты (например, "##.##.####")
-'   minDate         - Минимально допустимая дата
-'   maxDate         - Максимально допустимая дата
-'   formatDate      - (Опционально) Формат отображения даты (по умолчанию "dd.mm.yyyy")
-'   visibleLabelHolder - (Опционально) Флаг видимости подсказки-заполнителя (по умолчанию True)
-'   borderColorOn   - (Опционально) Цвет границы при валидном вводе (по умолчанию COLOR_DEFAULT_ON)
-'   borderColorOff  - (Опционально) Цвет границы при невалидном вводе (по умолчанию COLOR_DEFAULT_OFF)
-'   foreColorHolder - (Опционально) Цвет текста подсказки (по умолчанию COLOR_DEFAULT_HOLDER)
+'   TextBox         - Textbox object to apply the mask to
+'   Mask            - Mask string for date (e.g., "##.##.####")
+'   minDate         - Minimum allowed date
+'   maxDate         - Maximum allowed date
+'   formatDate      - (Optional) Date display format (default "dd.mm.yyyy")
+'   visibleLabelHolder - (Optional) Flag for placeholder hint visibility (default True)
+'   borderColorValid   - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   borderColorNoValid  - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   foreColorHolder - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
 Public Sub addItemFixLenDate(ByRef TextBox As MSForms.TextBox, ByVal Mask As String, _
         ByVal minDate As Date, _
         ByVal maxDate As Date, _
         Optional formatDate As String = "dd.mm.yyyy", _
         Optional visibleLabelHolder As Boolean = True, _
-        Optional borderColorOn As XlRgbColor = COLOR_DEFAULT_ON, _
-        Optional borderColorOff As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional borderColorValid As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional borderColorNoValid As XlRgbColor = COLOR_DEFAULT_OFF, _
         Optional foreColorHolder As XlRgbColor = COLOR_DEFAULT_HOLDER)
-    Call addItem(TextBox, Mask, enumTypeMask.tDateFix, formatDate, False, False, borderColorOn, borderColorOff, _
+    Call addItem(TextBox, Mask, enumTypeMask.tDateFix, formatDate, False, False, borderColorValid, borderColorNoValid, _
             minDate, maxDate, visibleLabelHolder, foreColorHolder)
 End Sub
 
 ' Method:        addItemFixLenTime
-' Description:   Добавляет новый элемент с маской времени фиксированной длины в коллекцию
+' Description:   Adds a new item with fixed-length time mask to the collection
 ' Parameters:
-'   TextBox         - Объект текстового поля для применения маски
-'   Mask            - Строка маски для времени (например, "##:##")
-'   minDate         - Минимально допустимое время
-'   maxDate         - Максимально допустимое время
-'   formatDate      - (Опционально) Формат отображения времени (по умолчанию "hh:mm")
-'   visibleLabelHolder - (Опционально) Флаг видимости подсказки-заполнителя (по умолчанию True)
-'   borderColorOn   - (Опционально) Цвет границы при валидном вводе (по умолчанию COLOR_DEFAULT_ON)
-'   borderColorOff  - (Опционально) Цвет границы при невалидном вводе (по умолчанию COLOR_DEFAULT_OFF)
-'   foreColorHolder - (Опционально) Цвет текста подсказки (по умолчанию COLOR_DEFAULT_HOLDER)
+'   TextBox         - Textbox object to apply the mask to
+'   Mask            - Mask string for time (e.g., "##:##")
+'   minDate         - Minimum allowed time
+'   maxDate         - Maximum allowed time
+'   formatDate      - (Optional) Time display format (default "hh:mm")
+'   visibleLabelHolder - (Optional) Flag for placeholder hint visibility (default True)
+'   borderColorValid   - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   borderColorNoValid  - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   foreColorHolder - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
 Public Sub addItemFixLenTime(ByRef TextBox As MSForms.TextBox, ByVal Mask As String, _
         ByVal minDate As Date, _
         ByVal maxDate As Date, _
         Optional formatDate As String = "hh:mm", _
         Optional visibleLabelHolder As Boolean = True, _
-        Optional borderColorOn As XlRgbColor = COLOR_DEFAULT_ON, _
-        Optional borderColorOff As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional borderColorValid As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional borderColorNoValid As XlRgbColor = COLOR_DEFAULT_OFF, _
         Optional foreColorHolder As XlRgbColor = COLOR_DEFAULT_HOLDER)
-    Call addItem(TextBox, Mask, enumTypeMask.tTimeFix, formatDate, False, False, borderColorOn, borderColorOff, _
+    Call addItem(TextBox, Mask, enumTypeMask.tTimeFix, formatDate, False, False, borderColorValid, borderColorNoValid, _
             0, 1, visibleLabelHolder, foreColorHolder)
 End Sub
 
 ' Method:        addItemFixLen
-' Description:   Добавляет новый элемент с текстовой маской фиксированной длины в коллекцию
+' Description:   Adds a new item with fixed-length text mask to the collection
 ' Parameters:
-'   TextBox         - Объект текстового поля для применения маски
-'   Mask            - Строка маски для текста (например, "###@@@")
-'   visibleLabelHolder - (Опционально) Флаг видимости подсказки-заполнителя (по умолчанию True)
-'   borderColorOn   - (Опционально) Цвет границы при валидном вводе (по умолчанию COLOR_DEFAULT_ON)
-'   borderColorOff  - (Опционально) Цвет границы при невалидном вводе (по умолчанию COLOR_DEFAULT_OFF)
-'   foreColorHolder - (Опционально) Цвет текста подсказки (по умолчанию COLOR_DEFAULT_HOLDER)
+'   TextBox         - Textbox object to apply the mask to
+'   Mask            - Mask string for text (e.g., "###@@@")
+'   visibleLabelHolder - (Optional) Flag for placeholder hint visibility (default True)
+'   borderColorValid   - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   borderColorNoValid  - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   foreColorHolder - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
 Public Sub addItemFixLen(ByRef TextBox As MSForms.TextBox, ByVal Mask As String, _
         Optional visibleLabelHolder As Boolean = True, _
-        Optional borderColorOn As XlRgbColor = COLOR_DEFAULT_ON, _
-        Optional borderColorOff As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional borderColorValid As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional borderColorNoValid As XlRgbColor = COLOR_DEFAULT_OFF, _
         Optional foreColorHolder As XlRgbColor = COLOR_DEFAULT_HOLDER)
-    Call addItem(TextBox, Mask, enumTypeMask.tOtherFix, vbNullString, False, False, borderColorOn, borderColorOff, _
+    Call addItem(TextBox, Mask, enumTypeMask.tOtherFix, vbNullString, False, False, borderColorValid, borderColorNoValid, _
             0, 0, visibleLabelHolder, foreColorHolder)
 End Sub
 
 ' Method:        addItem
-' Description:   Внутренний метод для добавления нового элемента маски ввода в коллекцию
-'                с полной настройкой всех параметров. Используется вспомогательными методами
-'                addItemNumeric, addItemFixLenDate, addItemFixLenTime и addItemFixLen.
+' Description:   Internal method for adding a new input mask item to the collection
+'                with full parameter configuration. Used by helper methods
+'                addItemNumeric, addItemFixLenDate, addItemFixLenTime and addItemFixLen.
 ' Parameters:
-'   TextBox         - Объект текстового поля для применения маски
-'   Mask            - Строка маски для текстового поля
-'   maskType        - Тип маски из перечисления enumTypeMask
-'   formatValue     - Формат отображения значения (используется для дат и чисел)
-'   IsDecemal       - Флаг разрешения ввода дробных чисел (для числовых масок)
-'   IsNegative      - Флаг разрешения ввода отрицательных чисел (для числовых масок)
-'   borderColorOn   - Цвет границы при валидном вводе
-'   borderColorOff  - Цвет границы при невалидном вводе
-'   snMin           - Минимальное допустимое значение (для числовых и дат)
-'   snMax           - Максимальное допустимое значение (для числовых и дат)
-'   visibleLabelHolder - Флаг видимости подсказки-заполнителя
-'   foreColorHolder - Цвет текста подсказки-заполнителя
+'   TextBox         - Textbox object to apply the mask to
+'   Mask            - Mask string for the text field
+'   maskType        - Mask type from the enumTypeMask enumeration
+'   formatValue     - Value display format (used for dates and numbers)
+'   IsDecemal       - Flag allowing input of decimal numbers (for numeric masks)
+'   IsNegative      - Flag allowing input of negative numbers (for numeric masks)
+'   borderColorValid   - Border color when input is valid
+'   borderColorNoValid  - Border color when input is invalid
+'   snMin           - Minimum allowed value (for numeric and date masks)
+'   snMax           - Maximum allowed value (for numeric and date masks)
+'   visibleLabelHolder - Flag for placeholder hint visibility
+'   foreColorHolder - Placeholder hint text color
 Private Sub addItem(ByRef TextBox As MSForms.TextBox, _
         ByVal Mask As String, _
         ByVal maskType As enumTypeMask, _
         ByVal formatValue As String, _
         ByVal IsDecemal As Boolean, _
         ByVal IsNegative As Boolean, _
-        ByVal borderColorOn As XlRgbColor, _
-        ByVal borderColorOff As XlRgbColor, _
+        ByVal borderColorValid As XlRgbColor, _
+        ByVal borderColorNoValid As XlRgbColor, _
         ByVal snMin As Single, _
         ByVal snMax As Single, _
         ByVal visibleLabelHolder As Boolean, _
@@ -495,8 +495,8 @@ Private Sub addItem(ByRef TextBox As MSForms.TextBox, _
         .Mask = Mask
         If .LenMask > 0 Then .TextBox.MaxLength = .LenMask
 
-        .borderColorOn = borderColorOn
-        .borderColorOff = borderColorOff
+        .borderColorValid = borderColorValid
+        .borderColorNoValid = borderColorNoValid
 
         .IsDecemal = IsDecemal
         .IsNegative = IsNegative
@@ -543,30 +543,30 @@ Private Sub addItem(ByRef TextBox As MSForms.TextBox, _
 End Sub
 
 ' Method:        IsValid
-' Description:   Проверяет валидность введенного значения в текстовом поле
-'                в соответствии с установленной маской
-' Returns:       Логическое значение (True/False), указывающее на валидность ввода
+' Description:   Checks the validity of the entered value in the text field
+'                according to the set mask
+' Returns:       Boolean value (True/False) indicating input validity
 Public Function IsValid() As Boolean
     IsValid = IsValidInput()
 End Function
 
 ' Method:        Clear
-' Description:   Очищает значение текстового поля
+' Description:   Clears the value of the text field
 Public Sub Clear()
     If Me.TextBox Is Nothing Then Exit Sub
     Me.Value = vbNullString
 End Sub
 
 ' Method:        SetFocus
-' Description:   Устанавливает фокус на текстовом поле
+' Description:   Sets focus to the text field
 Public Sub SetFocus()
     If Me.TextBox Is Nothing Then Exit Sub
     Me.TextBox.SetFocus
 End Sub
 
 ' Method:        RemoveItem
-' Description:   Удаляет элемент маски ввода из коллекции и очищает связанные элементы управления
-'                (подсказку-заполнитель и текстовое поле)
+' Description:   Removes the input mask item from the collection and clears associated controls
+'                (placeholder hint and text field)
 Public Sub RemoveItem()
     If Not Me.LabelHolder Is Nothing Then
         On Error Resume Next
@@ -632,9 +632,9 @@ Private Sub KeyAsciiFixLenText(ByRef KeyAscii As MSForms.ReturnInteger)
                 Call LatinLetters(KeyAscii)
             Case "A"
                 Call AlphaNumeric(KeyAscii)
-            Case "�"
+            Case "Б"
                 Call UniCodeLetters(KeyAscii)
-            Case "�"
+            Case "б"
                 Call UniCodeLettersNumeric(KeyAscii)
             Case "*"
                 ' Allow any character
@@ -764,22 +764,21 @@ Private Sub colorContr(ByRef Value As Boolean)
     If Me.TextBox Is Nothing Then Exit Sub
     With Me.TextBox
         If Value Then
-            .BorderColor = mBorderColorOn
+            .BorderColor = Me.BorderColorValid
         Else
-            .BorderColor = mBorderColorOff
+            .BorderColor = Me.BorderColorNoValid
         End If
     End With
 End Sub
 
 '---------------------------------------------------------------------------------------
 ' Function: IsControlInCollection
-' Purpose:  Проверяет, существует ли элемент управления с указанным именем в коллекции
-'           элементов класса. Используется для предотвращения дублирования элементов
-'           при добавлении новых масок ввода.
+' Purpose:  Checks if a control with the specified name exists in the class
+'           collection. Used to prevent duplication of items when adding new input masks.
 ' Parameters:
-'   controlName - Строка, содержащая имя элемента управления для проверки
-' Returns: True, если элемент управления с таким именем уже существует в коллекции,
-'          False в противном случае
+'   controlName - String containing the name of the control to check
+' Returns: True if a control with that name already exists in the collection,
+'          False otherwise
 '---------------------------------------------------------------------------------------
 Private Function IsControlInCollection(ByVal controlName As String) As Boolean
     Dim tempItem    As clsTextboxMask

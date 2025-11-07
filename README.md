@@ -16,8 +16,8 @@ This project contains the `clsTextboxMask` class for Microsoft VBA, which allows
   - `@` - Latin letters
   - `*` - any characters
   - `A` - Latin letters and digits
-  - `А` - Cyrillic letters
-  - `а` - Cyrillic letters and digits
+  - `Б` - Cyrillic letters
+  - `б` - Cyrillic letters and digits
 
 ## Installation
 1. Copy the `clsTextboxMask.cls` file to your VBA project
