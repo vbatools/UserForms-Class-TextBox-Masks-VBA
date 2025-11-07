@@ -30,6 +30,12 @@ Option Explicit
 '              Each masked field has visual indicators: border color
 '              changes depending on the validity of input data, and
 '              a placeholder hint with the expected format is displayed.
+'
+' Examples of usage:
+'   Numeric field: obj.addNumericField(Me.TextBox1, 0, 100, True, False) ' 0 to 100, with decimal, without negative
+'   Date field: obj.addDateField(Me.TextBox1, "##.##.####", #1/1/200#, #1/1/2030#, "dd.mm.yyyy") ' Date from 01.01.2000 to 01.01.2030
+'   Time field: obj.addTimeField(Me.TextBox1, "##:##", #0:00#, #23:59#, "hh:mm") ' Time from 00:00 to 23:59
+'   Text field: obj.addTextField(Me.TextBox1, "###@@@") ' 3 digits followed by 3 letters
 ' ======================================================================================
 ' Enum:          enumTypeMask
 ' Description:   Enumeration of mask types supported by the class
@@ -167,6 +173,18 @@ Public Property Set LabelHolder(ByRef Label As MSForms.Label)
     Set mLabelHolder = Label
 End Property
 
+' Property:      InputControl
+' Description:   Alternative property to get and set the input control (TextBox)
+' Returns/Parameters:
+'   Control - MSForms.TextBox object that serves as the input control
+Public Property Get inputControl() As MSForms.TextBox
+    Set inputControl = mTextBox
+End Property
+
+Public Property Set inputControl(ByRef Control As MSForms.TextBox)
+    Set mTextBox = Control
+End Property
+
 Public Property Get Items() As Collection
     Set Items = mItems
 End Property
@@ -234,6 +252,20 @@ Public Property Get Mask() As String
     Mask = mMask
 End Property
 
+' Property:      InputMask
+' Description:   Alternative property to get and set the input mask for the text field
+' Returns/Parameters:
+'   Mask - String defining the input mask using special characters:
+'          # (digits), @ (Latin letters), * (any characters), A (Latin letters and digits),
+'          Б (Cyrillic letters), б (Cyrillic letters and digits)
+Public Property Let InputMask(ByRef Mask As String)
+    mMask = Mask
+End Property
+
+Public Property Get InputMask() As String
+    InputMask = mMask
+End Property
+
 ' Property:      LenMask
 ' Description:   Property to get the length of the input mask
 ' Returns:       Integer representing the number of characters in the mask
@@ -280,6 +312,30 @@ Public Property Get borderColorNoValid() As Long
     borderColorNoValid = mBorderColorNoValid
 End Property
 
+' Property:      ValidColor
+' Description:   Alternative property to get and set the border color when input is valid
+' Returns/Parameters:
+'   Color - Color value (Long) used for the border when input is valid
+Public Property Let validColor(ByRef Color As Long)
+    mBorderColorValid = Color
+End Property
+
+Public Property Get validColor() As Long
+    validColor = mBorderColorValid
+End Property
+
+' Property:      InvalidColor
+' Description:   Alternative property to get and set the border color when input is invalid
+' Returns/Parameters:
+'   Color - Color value (Long) used for the border when input is invalid
+Public Property Let invalidColor(ByRef Color As Long)
+    mBorderColorNoValid = Color
+End Property
+
+Public Property Get invalidColor() As Long
+    invalidColor = mBorderColorNoValid
+End Property
+
 ' Property:      Count
 ' Description:   Property to get the number of elements in the collection
 '                of input masks
@@ -308,10 +364,16 @@ End Property
 '                or Nothing if an item with that index does not exist
 Public Property Get getItemByIndex(ByVal index As Integer) As clsTextboxMask
     On Error GoTo endGetItem
-    Set getItemByIndex = Me.Items(index)
+    If Not Me.Items Is Nothing Then Set getItemByIndex = Me.Items(index)
     Exit Property
 endGetItem:
-    Err.Clear
+    ' Не очищаем ошибку, а логируем её для диагностики
+    Select Case Err.Number
+        Case 0, 5
+        Case Else
+            Debug.Print "Error in getItemByName: " & Err.Description & " (Number: " & Err.Number & ")"
+            Set getItemByIndex = Nothing
+    End Select
 End Property
 
 ' Property:      getItemByName
@@ -322,10 +384,16 @@ End Property
 '                or Nothing if an item with that name does not exist
 Public Property Get getItemByName(ByVal Name As String) As clsTextboxMask
     On Error GoTo endGetItem
-    Set getItemByName = Me.Items(Name)
+    If Not Me.Items Is Nothing Then Set getItemByName = Me.Items(Name)
     Exit Property
 endGetItem:
-    Err.Clear
+    ' Don't clear the error, but log it for diagnostics
+    Select Case Err.Number
+        Case 0, 5
+        Case Else
+            Debug.Print "Error in getItemByName: " & Err.Description & " (Number: " & Err.Number & ")"
+            Set getItemByName = Nothing
+    End Select
 End Property
 
 ' Property: Version
@@ -343,131 +411,135 @@ Public Property Get Version() As String
             "of field fill status."
 End Property
 
-' Method:        addItemNumeric
-' Description:   Adds a new item with numeric mask type to the collection
+' Method:        addNumericField
+' Description:   Alternative method to add a new item with numeric mask type to the collection
 ' Parameters:
-'   TextBox         - Textbox object to apply the mask to
-'   snMin           - Minimum allowed value
-'   snMax           - Maximum allowed value
-'   IsDecemal       - Flag allowing input of decimal numbers
-'   IsNegative      - Flag allowing input of negative numbers
-'   visibleLabelHolder - (Optional) Flag for placeholder hint visibility (default True)
-'   formatNumeric   - (Optional) Number display format (default "#.0")
-'   borderColorValid   - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
-'   borderColorNoValid  - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
-'   foreColorHolder - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
-Public Sub addItemNumeric(ByRef TextBox As MSForms.TextBox, _
-        ByVal snMin As Single, _
-        ByVal snMax As Single, _
-        ByVal IsDecemal As Boolean, _
-        ByVal IsNegative As Boolean, _
-        Optional visibleLabelHolder As Boolean = True, _
-        Optional formatNumeric As String = "#.0", _
-        Optional borderColorValid As XlRgbColor = COLOR_DEFAULT_ON, _
-        Optional borderColorNoValid As XlRgbColor = COLOR_DEFAULT_OFF, _
-        Optional foreColorHolder As XlRgbColor = COLOR_DEFAULT_HOLDER)
-    Call addItem(TextBox, String$(WorksheetFunction.Max(VBA.Len(snMin), VBA.Len(snMax)), "#"), _
-            enumTypeMask.tNumeric, formatNumeric, IsDecemal, IsNegative, borderColorValid, borderColorNoValid, _
-            snMin, snMax, visibleLabelHolder, foreColorHolder)
+'   inputControl    - Textbox object to apply the mask to
+'   minValue        - Minimum allowed value
+'   maxValue        - Maximum allowed value
+'   allowDecimal    - Flag allowing input of decimal numbers
+'   allowNegative   - Flag allowing input of negative numbers
+'   showPlaceholder - (Optional) Flag for placeholder hint visibility (default True)
+'   numberFormat    - (Optional) Number display format (default "#.0")
+'   validColor      - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   invalidColor    - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   placeholderColor - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
+' Example:       obj.addNumericField(Me.TextBox1, 0, 100, True, False) ' Numeric field from 0 to 100, with decimal, without negative
+Public Sub addNumericField(ByRef inputControl As MSForms.TextBox, _
+        ByVal minValue As Single, _
+        ByVal maxValue As Single, _
+        ByVal allowDecimal As Boolean, _
+        ByVal allowNegative As Boolean, _
+        Optional showPlaceholder As Boolean = True, _
+        Optional numberFormat As String = "#.0", _
+        Optional validColor As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
+    Call addField(inputControl, String$(WorksheetFunction.Max(VBA.Len(minValue), VBA.Len(maxValue)), "#"), _
+            enumTypeMask.tNumeric, numberFormat, allowDecimal, allowNegative, validColor, invalidColor, _
+            minValue, maxValue, showPlaceholder, placeholderColor)
 End Sub
 
-' Method:        addItemFixLenDate
-' Description:   Adds a new item with fixed-length date mask to the collection
+' Method:        addDateField
+' Description:   Alternative method to add a new item with fixed-length date mask to the collection
 ' Parameters:
-'   TextBox         - Textbox object to apply the mask to
-'   Mask            - Mask string for date (e.g., "##.##.####")
+'   inputControl    - Textbox object to apply the mask to
+'   dateMask        - Mask string for date (e.g., "##.##.####")
 '   minDate         - Minimum allowed date
 '   maxDate         - Maximum allowed date
-'   formatDate      - (Optional) Date display format (default "dd.mm.yyyy")
-'   visibleLabelHolder - (Optional) Flag for placeholder hint visibility (default True)
-'   borderColorValid   - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
-'   borderColorNoValid  - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
-'   foreColorHolder - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
-Public Sub addItemFixLenDate(ByRef TextBox As MSForms.TextBox, ByVal Mask As String, _
+'   dateFormat      - (Optional) Date display format (default "dd.mm.yyyy")
+'   showPlaceholder - (Optional) Flag for placeholder hint visibility (default True)
+'   validColor      - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   invalidColor    - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   placeholderColor - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
+' Example:       obj.addDateField(Me.TextBox1, "##.##.####", #1/1/2000#, #1/1/2030#, "dd.mm.yyyy") ' Date from 01.01.2000 to 01.01.2030
+Public Sub addDateField(ByRef inputControl As MSForms.TextBox, ByVal dateMask As String, _
         ByVal minDate As Date, _
         ByVal maxDate As Date, _
-        Optional formatDate As String = "dd.mm.yyyy", _
-        Optional visibleLabelHolder As Boolean = True, _
-        Optional borderColorValid As XlRgbColor = COLOR_DEFAULT_ON, _
-        Optional borderColorNoValid As XlRgbColor = COLOR_DEFAULT_OFF, _
-        Optional foreColorHolder As XlRgbColor = COLOR_DEFAULT_HOLDER)
-    Call addItem(TextBox, Mask, enumTypeMask.tDateFix, formatDate, False, False, borderColorValid, borderColorNoValid, _
-            minDate, maxDate, visibleLabelHolder, foreColorHolder)
+        Optional dateFormat As String = "dd.mm.yyyy", _
+        Optional showPlaceholder As Boolean = True, _
+        Optional validColor As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
+    Call addField(inputControl, dateMask, enumTypeMask.tDateFix, dateFormat, False, False, validColor, invalidColor, _
+            minDate, maxDate, showPlaceholder, placeholderColor)
 End Sub
 
-' Method:        addItemFixLenTime
-' Description:   Adds a new item with fixed-length time mask to the collection
+' Method:        addTimeField
+' Description:   Alternative method to add a new item with fixed-length time mask to the collection
 ' Parameters:
-'   TextBox         - Textbox object to apply the mask to
-'   Mask            - Mask string for time (e.g., "##:##")
-'   minDate         - Minimum allowed time
-'   maxDate         - Maximum allowed time
-'   formatDate      - (Optional) Time display format (default "hh:mm")
-'   visibleLabelHolder - (Optional) Flag for placeholder hint visibility (default True)
-'   borderColorValid   - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
-'   borderColorNoValid  - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
-'   foreColorHolder - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
-Public Sub addItemFixLenTime(ByRef TextBox As MSForms.TextBox, ByVal Mask As String, _
-        ByVal minDate As Date, _
-        ByVal maxDate As Date, _
-        Optional formatDate As String = "hh:mm", _
-        Optional visibleLabelHolder As Boolean = True, _
-        Optional borderColorValid As XlRgbColor = COLOR_DEFAULT_ON, _
-        Optional borderColorNoValid As XlRgbColor = COLOR_DEFAULT_OFF, _
-        Optional foreColorHolder As XlRgbColor = COLOR_DEFAULT_HOLDER)
-    Call addItem(TextBox, Mask, enumTypeMask.tTimeFix, formatDate, False, False, borderColorValid, borderColorNoValid, _
-            0, 1, visibleLabelHolder, foreColorHolder)
+'   inputControl    - Textbox object to apply the mask to
+'   timeMask        - Mask string for time (e.g., "##:##")
+'   minTime         - Minimum allowed time
+'   maxTime         - Maximum allowed time
+'   timeFormat      - (Optional) Time display format (default "hh:mm")
+'   showPlaceholder - (Optional) Flag for placeholder hint visibility (default True)
+'   validColor      - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   invalidColor    - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   placeholderColor - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
+' Example:       obj.addTimeField(Me.TextBox1, "##:##", #0:00#, #23:59#, "hh:mm") ' Time from 00:00 to 23:59
+Public Sub addTimeField(ByRef inputControl As MSForms.TextBox, ByVal timeMask As String, _
+        ByVal minTime As Date, _
+        ByVal maxTime As Date, _
+        Optional timeFormat As String = "hh:mm", _
+        Optional showPlaceholder As Boolean = True, _
+        Optional validColor As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
+    Call addField(inputControl, timeMask, enumTypeMask.tTimeFix, timeFormat, False, False, validColor, invalidColor, _
+            0, 1, showPlaceholder, placeholderColor)
 End Sub
 
-' Method:        addItemFixLen
-' Description:   Adds a new item with fixed-length text mask to the collection
+' Method:        addTextField
+' Description:   Alternative method to add a new item with fixed-length text mask to the collection
 ' Parameters:
-'   TextBox         - Textbox object to apply the mask to
-'   Mask            - Mask string for text (e.g., "###@@@")
-'   visibleLabelHolder - (Optional) Flag for placeholder hint visibility (default True)
-'   borderColorValid   - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
-'   borderColorNoValid  - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
-'   foreColorHolder - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
-Public Sub addItemFixLen(ByRef TextBox As MSForms.TextBox, ByVal Mask As String, _
-        Optional visibleLabelHolder As Boolean = True, _
-        Optional borderColorValid As XlRgbColor = COLOR_DEFAULT_ON, _
-        Optional borderColorNoValid As XlRgbColor = COLOR_DEFAULT_OFF, _
-        Optional foreColorHolder As XlRgbColor = COLOR_DEFAULT_HOLDER)
-    Call addItem(TextBox, Mask, enumTypeMask.tOtherFix, vbNullString, False, False, borderColorValid, borderColorNoValid, _
-            0, 0, visibleLabelHolder, foreColorHolder)
+'   inputControl    - Textbox object to apply the mask to
+'   textMask        - Mask string for text (e.g., "###@@@")
+'   showPlaceholder - (Optional) Flag for placeholder hint visibility (default True)
+'   validColor      - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   invalidColor    - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   placeholderColor - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
+' Example:       obj.addTextField(Me.TextBox1, "###@@@") ' 3 digits followed by 3 letters
+Public Sub addTextField(ByRef inputControl As MSForms.TextBox, ByVal textMask As String, _
+        Optional showPlaceholder As Boolean = True, _
+        Optional validColor As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
+    Call addField(inputControl, textMask, enumTypeMask.tOtherFix, vbNullString, False, False, validColor, invalidColor, _
+            0, 0, showPlaceholder, placeholderColor)
 End Sub
 
-' Method:        addItem
+' Method:        addField
 ' Description:   Internal method for adding a new input mask item to the collection
 '                with full parameter configuration. Used by helper methods
-'                addItemNumeric, addItemFixLenDate, addItemFixLenTime and addItemFixLen.
+'                addNumericField, addDateField, addTimeField and addTextField.
 ' Parameters:
-'   TextBox         - Textbox object to apply the mask to
-'   Mask            - Mask string for the text field
+'   inputControl    - Textbox object to apply the mask to
+'   textMask        - Mask string for the text field
 '   maskType        - Mask type from the enumTypeMask enumeration
 '   formatValue     - Value display format (used for dates and numbers)
-'   IsDecemal       - Flag allowing input of decimal numbers (for numeric masks)
-'   IsNegative      - Flag allowing input of negative numbers (for numeric masks)
-'   borderColorValid   - Border color when input is valid
-'   borderColorNoValid  - Border color when input is invalid
-'   snMin           - Minimum allowed value (for numeric and date masks)
-'   snMax           - Maximum allowed value (for numeric and date masks)
-'   visibleLabelHolder - Flag for placeholder hint visibility
-'   foreColorHolder - Placeholder hint text color
-Private Sub addItem(ByRef TextBox As MSForms.TextBox, _
-        ByVal Mask As String, _
+'   allowDecimal    - Flag allowing input of decimal numbers (for numeric masks)
+'   allowNegative   - Flag allowing input of negative numbers (for numeric masks)
+'   validColor      - Border color when input is valid
+'   invalidColor    - Border color when input is invalid
+'   minValue        - Minimum allowed value (for numeric and date masks)
+'   maxValue        - Maximum allowed value (for numeric and date masks)
+'   showPlaceholder - Flag for placeholder hint visibility
+'   placeholderColor - Placeholder hint text color
+Private Sub addField(ByRef inputControl As MSForms.TextBox, _
+        ByVal textMask As String, _
         ByVal maskType As enumTypeMask, _
         ByVal formatValue As String, _
-        ByVal IsDecemal As Boolean, _
-        ByVal IsNegative As Boolean, _
-        ByVal borderColorValid As XlRgbColor, _
-        ByVal borderColorNoValid As XlRgbColor, _
-        ByVal snMin As Single, _
-        ByVal snMax As Single, _
-        ByVal visibleLabelHolder As Boolean, _
-        ByVal foreColorHolder As XlRgbColor)
+        ByVal allowDecimal As Boolean, _
+        ByVal allowNegative As Boolean, _
+        ByVal validColor As XlRgbColor, _
+        ByVal invalidColor As XlRgbColor, _
+        ByVal minValue As Single, _
+        ByVal maxValue As Single, _
+        ByVal showPlaceholder As Boolean, _
+        ByVal placeholderColor As XlRgbColor)
 
-    If TextBox Is Nothing Then
+    If inputControl Is Nothing Then
         Err.Raise vbObjectError + 101, "clsTextboxMask", "TextBox cannot be Nothing"
         Exit Sub
     End If
@@ -477,7 +549,7 @@ Private Sub addItem(ByRef TextBox As MSForms.TextBox, _
         Exit Sub
     End If
 
-    If IsControlInCollection(TextBox.Name) Then
+    If IsControlInCollection(inputControl.Name) Then
         Err.Raise vbObjectError + 103, "clsTextboxMask", "The item has already been created"
         Exit Sub
     End If
@@ -491,33 +563,34 @@ Private Sub addItem(ByRef TextBox As MSForms.TextBox, _
     Set itemCls = New clsTextboxMask
 
     With itemCls
-        Set .TextBox = TextBox
-        .Mask = Mask
+        Set .TextBox = inputControl
+        .Mask = textMask
         If .LenMask > 0 Then .TextBox.MaxLength = .LenMask
 
-        .borderColorValid = borderColorValid
-        .borderColorNoValid = borderColorNoValid
+        .borderColorValid = validColor
+        .borderColorNoValid = invalidColor
 
-        .IsDecemal = IsDecemal
-        .IsNegative = IsNegative
+        .IsDecemal = allowDecimal
+        .IsNegative = allowNegative
 
-        .Max = snMax
-        .Min = snMin
+        .Max = maxValue
+        .Min = minValue
 
         Dim labelName As String
-        labelName = TextBox.Name & "_holder"
+        labelName = inputControl.Name & "_holder"
 
+        ' Check if a label with this name already exists
         On Error Resume Next
-        Set Me.LabelHolder = .TextBox.Parent.Controls(labelName)
+        Dim existingLabel As MSForms.Control
+        Set existingLabel = .TextBox.Parent.Controls(labelName)
         On Error GoTo 0
 
-        If Not Me.LabelHolder Is Nothing Then
-            If Not .TextBox.Parent.Controls(labelName) Is Nothing Then
-                .TextBox.Parent.Controls.Remove labelName
-            End If
+        If Not existingLabel Is Nothing Then
+            .TextBox.Parent.Controls.Remove existingLabel.Name
         End If
 
         Set .LabelHolder = .TextBox.Parent.Controls.Add("Forms.Label.1", labelName, True)
+
         With .LabelHolder
             .Left = itemCls.TextBox.Left + 8
             .Width = itemCls.TextBox.Width
@@ -526,17 +599,17 @@ Private Sub addItem(ByRef TextBox As MSForms.TextBox, _
             .Caption = itemCls.Mask
             .BackStyle = fmBackStyleTransparent
             '.BorderStyle = fmBorderStyleSingle
-            .ForeColor = foreColorHolder
+            .ForeColor = placeholderColor
             .Font.Name = itemCls.TextBox.Font.Name
             .Font.Size = itemCls.TextBox.Font.Size * 0.9
         End With
 
-        .visibleLabelHolder = visibleLabelHolder
+        .visibleLabelHolder = showPlaceholder
         .CurrentMaskType = maskType
         .formatValue = formatValue
         If formatValue = vbNullString Then .formatValue = maskType
         If mItems Is Nothing Then Set mItems = New Collection
-        Call mItems.Add(itemCls, TextBox.Name)
+        Call mItems.Add(itemCls, inputControl.Name)
         Call .IsValid
         Set .Items = mItems
     End With
@@ -589,7 +662,6 @@ Private Sub mTextBox_change()
         Me.LabelHolder.Caption = Me.PlaceHolder
     End If
     Call IsValidInput
-
 End Sub
 
 Private Sub mTextBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
@@ -597,12 +669,8 @@ Private Sub mTextBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
         Case enumTypeMask.tDateFix, enumTypeMask.tTimeFix, enumTypeMask.tOtherFix:
             Call KeyAsciiFixLenText(KeyAscii)
         Case enumTypeMask.tNumeric
-            Call KeyAsciiNumeric(KeyAscii)
+            Call NumericAll(KeyAscii)
     End Select
-End Sub
-
-Private Sub KeyAsciiNumeric(ByRef KeyAscii As MSForms.ReturnInteger)
-    Call NumericAll(KeyAscii)
 End Sub
 
 Private Sub KeyAsciiFixLenText(ByRef KeyAscii As MSForms.ReturnInteger)
@@ -651,14 +719,7 @@ ErrorHandler:
 End Sub
 
 Private Function haveSimvol(ByVal sVal As String) As Boolean
-    Dim i           As Byte
-
-    For i = 1 To VBA.Len(SIMVOLS_MASKS)
-        If sVal = VBA.Mid$(SIMVOLS_MASKS, i, 1) Then
-            haveSimvol = True
-            Exit Function
-        End If
-    Next i
+    haveSimvol = (InStr(1, SIMVOLS_MASKS, sVal, vbBinaryCompare) > 0)
 End Function
 
 Private Sub NumericAll(ByRef KeyAscii As MSForms.ReturnInteger)
@@ -678,55 +739,71 @@ Private Sub NumericAll(ByRef KeyAscii As MSForms.ReturnInteger)
             End If
         Case 46:
             If Me.IsDecemal Then
-                KeyAscii = IIf(InStr(1, Me.Value, ",") > 0, 0, 44)
+                KeyAscii = IIf(InStr(1, Me.Value, ".") > 0, 0, 44)
             Else
                 KeyAscii = 0
             End If
-        Case 8:
+        Case 8:    ' ASCII code for Backspace key - allow
             ' Do nothing, character is allowed
         Case Else:
             KeyAscii = 0
     End Select
 End Sub
 
+Private Function IsValidLatinLetter(ByVal KeyAscii As Integer) As Boolean
+    IsValidLatinLetter = (KeyAscii >= 65 And KeyAscii <= 90) Or (KeyAscii >= 97 And KeyAscii <= 122)
+End Function
+
+Private Function IsValidCyrillicLetter(ByVal KeyAscii As Integer) As Boolean
+    IsValidCyrillicLetter = (KeyAscii >= 192 And KeyAscii <= 255) Or (KeyAscii >= 1040 And KeyAscii <= 1103)
+End Function
+
+Private Function IsValidDigit(ByVal KeyAscii As Integer) As Boolean
+    IsValidDigit = (KeyAscii >= 48 And KeyAscii <= 57)
+End Function
+
 Private Sub LatinLetters(ByRef KeyAscii As MSForms.ReturnInteger)
-    Select Case KeyAscii
-        Case 65 To 90, 97 To 122:    ' ASCII codes for uppercase and lowercase Latin letters
-        Case 8:    ' ASCII code for Backspace key - allow
-            ' Do nothing, character is allowed
-        Case Else:
-            KeyAscii = 0
-    End Select
+    If IsValidLatinLetter(KeyAscii) Then
+        ' This is a Latin letter, leave as is
+    ElseIf KeyAscii = 8 Then
+        ' Backspace key, allow
+    Else
+        ' Does not meet requirements, reject
+        KeyAscii = 0
+    End If
 End Sub
 
 Private Sub UniCodeLetters(ByRef KeyAscii As MSForms.ReturnInteger)
-    Select Case KeyAscii
-        Case 192 To 255, 1040 To 1103:    ' ASCII codes for uppercase and lowercase UniCode letters
-        Case 8:    ' ASCII code for Backspace key - allow
-            ' Do nothing, character is allowed
-        Case Else:
-            KeyAscii = 0
-    End Select
+    If IsValidCyrillicLetter(KeyAscii) Then
+        ' This is a Cyrillic letter, leave as is
+    ElseIf KeyAscii = 8 Then
+        ' Backspace key, allow
+    Else
+        ' Does not meet requirements, reject
+        KeyAscii = 0
+    End If
 End Sub
 
 Private Sub AlphaNumeric(ByRef KeyAscii As MSForms.ReturnInteger)
-    Select Case KeyAscii
-        Case 48 To 57, 65 To 90, 97 To 122:    ' ASCII codes for digits and Latin letters
-        Case 8:    ' ASCII code for Backspace key - allow
-            ' Do nothing, character is allowed
-        Case Else:
-            KeyAscii = 0
-    End Select
+    If IsValidDigit(KeyAscii) Or IsValidLatinLetter(KeyAscii) Then
+        ' This is a digit or Latin letter, leave as is
+    ElseIf KeyAscii = 8 Then
+        ' Backspace key, allow
+    Else
+        ' Does not meet requirements, reject
+        KeyAscii = 0
+    End If
 End Sub
 
 Private Sub UniCodeLettersNumeric(ByRef KeyAscii As MSForms.ReturnInteger)
-    Select Case KeyAscii
-        Case 48 To 57, 192 To 255, 1040 To 1103:    ' ASCII codes for uppercase and lowercase UniCode letters
-        Case 8:    ' ASCII code for Backspace key - allow
-            ' Do nothing, character is allowed
-        Case Else:
-            KeyAscii = 0
-    End Select
+    If IsValidDigit(KeyAscii) Or IsValidCyrillicLetter(KeyAscii) Then
+        ' This is a digit or Cyrillic letter, leave as is
+    ElseIf KeyAscii = 8 Then
+        ' Backspace key, allow
+    Else
+        ' Does not meet requirements, reject
+        KeyAscii = 0
+    End If
 End Sub
 
 Private Function IsValidInput() As Boolean
@@ -764,9 +841,9 @@ Private Sub colorContr(ByRef Value As Boolean)
     If Me.TextBox Is Nothing Then Exit Sub
     With Me.TextBox
         If Value Then
-            .BorderColor = Me.BorderColorValid
+            .BorderColor = Me.borderColorValid
         Else
-            .BorderColor = Me.BorderColorNoValid
+            .BorderColor = Me.borderColorNoValid
         End If
     End With
 End Sub
@@ -782,12 +859,15 @@ End Sub
 '---------------------------------------------------------------------------------------
 Private Function IsControlInCollection(ByVal controlName As String) As Boolean
     Dim tempItem    As clsTextboxMask
+    On Error Resume Next
     Set tempItem = getItemByName(controlName)
+    On Error GoTo 0
     If Not tempItem Is Nothing Then IsControlInCollection = True
 End Function
 
 Private Sub Class_Terminate()
-    Set Me.TextBox = Nothing
-    Set Me.LabelHolder = Nothing
-    Set Me.Items = Nothing
+    ' Clear all objects when destroying the class
+    Set mTextBox = Nothing
+    Set mLabelHolder = Nothing
+    Set mItems = Nothing
 End Sub
