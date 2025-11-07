@@ -11,9 +11,9 @@ Option Explicit
 ' ======================================================================================
 ' Class:         clsTextboxMask
 ' Author:        VBATools
-' Version:       1.0.2
+' Version:       1.0.3
 ' Creation Date: 11.05.2025 10:30
-' Update Date:   11.05.2025 22:05
+' Update Date:   07.11.2025 16:50
 ' License:       Apache License
 ' Description:   Класс для создания текстовых полей с масками ввода в VBA.
 '              Поддерживает различные типы масок: цифровые, буквенные, даты,
@@ -300,6 +300,12 @@ Public Property Get RemainingChars() As Integer
     RemainingChars = Me.LenMask - Me.LenValue
 End Property
 
+' Property:      getItemByIndex
+' Description:   Свойство для получения элемента из коллекции масок ввода по индексу
+' Parameters:
+'   index - Целое число, представляющее индекс элемента в коллекции (начиная с 1)
+' Returns:       Объект clsTextboxMask, соответствующий указанному индексу,
+'                или Nothing, если элемент с таким индексом не существует
 Public Property Get getItemByIndex(ByVal index As Integer) As clsTextboxMask
     On Error GoTo endGetItem
     Set getItemByIndex = Me.Items(index)
@@ -308,8 +314,12 @@ endGetItem:
     Err.Clear
 End Property
 
-' Property: getItemByName
-' Purpose: Gets an item from the collection by name
+' Property:      getItemByName
+' Description:   Свойство для получения элемента из коллекции масок ввода по имени
+' Parameters:
+'   Name - Строка, представляющая имя элемента в коллекции
+' Returns:       Объект clsTextboxMask, соответствующий указанному имени,
+'                или Nothing, если элемент с таким именем не существует
 Public Property Get getItemByName(ByVal Name As String) As clsTextboxMask
     On Error GoTo endGetItem
     Set getItemByName = Me.Items(Name)
@@ -323,9 +333,9 @@ End Property
 Public Property Get Version() As String
     Version = "Class: clsTextboxMask" & vbNewLine & _
             "Author: VBATools" & vbNewLine & _
-            "Version: 1.0.2" & vbNewLine & _
+            "Version: 1.0.3" & vbNewLine & _
             "Date of creation: 05.11.2025 10:30" & vbNewLine & _
-            "Date of update: 05.11.2025 22:05" & vbNewLine & _
+            "Date of update: 07.11.2025 16:50" & vbNewLine & _
             "License: Apache" & vbNewLine & _
             "Description: Class for creating textboxes with input masks in VBA" & vbNewLine & _
             "Supports various mask types: digital, letters, dates, phone numbers, etc." & vbNewLine & _
@@ -427,6 +437,23 @@ Public Sub addItemFixLen(ByRef TextBox As MSForms.TextBox, ByVal Mask As String,
             0, 0, visibleLabelHolder, foreColorHolder)
 End Sub
 
+' Method:        addItem
+' Description:   Внутренний метод для добавления нового элемента маски ввода в коллекцию
+'                с полной настройкой всех параметров. Используется вспомогательными методами
+'                addItemNumeric, addItemFixLenDate, addItemFixLenTime и addItemFixLen.
+' Parameters:
+'   TextBox         - Объект текстового поля для применения маски
+'   Mask            - Строка маски для текстового поля
+'   maskType        - Тип маски из перечисления enumTypeMask
+'   formatValue     - Формат отображения значения (используется для дат и чисел)
+'   IsDecemal       - Флаг разрешения ввода дробных чисел (для числовых масок)
+'   IsNegative      - Флаг разрешения ввода отрицательных чисел (для числовых масок)
+'   borderColorOn   - Цвет границы при валидном вводе
+'   borderColorOff  - Цвет границы при невалидном вводе
+'   snMin           - Минимальное допустимое значение (для числовых и дат)
+'   snMax           - Максимальное допустимое значение (для числовых и дат)
+'   visibleLabelHolder - Флаг видимости подсказки-заполнителя
+'   foreColorHolder - Цвет текста подсказки-заполнителя
 Private Sub addItem(ByRef TextBox As MSForms.TextBox, _
         ByVal Mask As String, _
         ByVal maskType As enumTypeMask, _
