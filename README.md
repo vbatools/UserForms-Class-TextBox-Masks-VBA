@@ -11,6 +11,8 @@ This project contains the `clsTextboxMask` class for Microsoft VBA, which allows
   - Date masks (with date validation and range checking)
   - Time masks (with time validation)
   - Fixed-length text masks (with various character types)
+  - Variable-length text masks (with optional pattern validation)
+  - Regular expression-based masks (custom validation patterns)
 - Visual validation indicators (border color changes based on input validity)
 - Placeholder hint display with expected format
 - Support for various character types in masks:
@@ -108,6 +110,46 @@ Call textboxMask.addItemFixLen(TextBox:=TextBox1, Mask:="###@@@", visibleLabelHo
                                foreColorHolder:=&H808080)
 ```
 
+### Variable-length Text Mask
+```vba
+Dim textboxMask As New clsTextboxMask
+Call textboxMask.addItemVariableLen(TextBox1, 20, "###@@@")
+```
+
+Using named arguments (walrus operator equivalent in VBA):
+```vba
+Dim textboxMask As New clsTextboxMask
+Call textboxMask.addItemVariableLen(TextBox:=TextBox1, maxLength:=20, textMask:="###@@@")
+```
+
+Using all named arguments with optional parameters:
+```vba
+Dim textboxMask As New clsTextboxMask
+Call textboxMask.addItemVariableLen(TextBox:=TextBox1, maxLength:=20, textMask:="###@@@", _
+                                  visibleLabelHolder:=True, borderColorValid:=&H8000006, _
+                                  borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
+```
+
+### Regular Expression-based Mask
+```vba
+Dim textboxMask As New clsTextboxMask
+Call textboxMask.addItemRegex(TextBox1, "^[A-Z]{3}\d{3}$")
+```
+
+Using named arguments (walrus operator equivalent in VBA):
+```vba
+Dim textboxMask As New clsTextboxMask
+Call textboxMask.addItemRegex(TextBox:=TextBox1, regexPattern:="^[A-Z]{3}\d{3}$")
+```
+
+Using all named arguments with optional parameters:
+```vba
+Dim textboxMask As New clsTextboxMask
+Call textboxMask.addItemRegex(TextBox:=TextBox1, regexPattern:="^[A-Z]{3}\d{3}$", _
+                            visibleLabelHolder:=True, borderColorValid:=&H8000006, _
+                            borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
+```
+
 ## Parameters
 - `TextBox` - textbox object to apply the mask to
 - `Mask` - input mask string
@@ -130,7 +172,7 @@ Call textboxMask.addItemFixLen(TextBox:=TextBox1, Mask:="###@@@", visibleLabelHo
 VBATools
 
 ## Version
-1.0.3
+1.0.4
 
 ## License
 Apache License

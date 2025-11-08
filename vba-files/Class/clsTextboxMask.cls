@@ -11,9 +11,9 @@ Option Explicit
 ' ======================================================================================
 ' Class:         clsTextboxMask
 ' Author:        VBATools
-' Version:       1.0.3
+' Version:       1.0.4
 ' Creation Date: 05.11.2025 10:30
-' Update Date:   07.11.2025 16:50
+' Update Date:   08.11.2025 12:00
 ' License:       Apache License
 ' Description:   Class for creating textboxes with input masks in VBA.
 '              Supports various mask types: numeric, letters, dates,
@@ -26,6 +26,8 @@ Option Explicit
 '              - Dates (with date validity and range checks)
 '              - Time (with time validity checks)
 '              - Fixed-length text (with various character types)
+'              - Variable-length text (with optional mask pattern)
+'              - Regular expression-based masks (custom validation patterns)
 '
 '              Each masked field has visual indicators: border color
 '              changes depending on the validity of input data, and
@@ -44,6 +46,8 @@ Option Explicit
 '   tDateFix  - Fixed-length date input mask
 '   tTimeFix  - Fixed-length time input mask
 '   tNumeric  - Numeric mask with range, sign and decimal options
+'   tVariableLen - Variable-length text mask with optional pattern
+'   tRegex    - Custom mask via regular expressions
 '   [_First]  - Helper value to determine the start of the enumeration
 '   [_Last]   - Helper value to determine the end of the enumeration
 Public Enum enumTypeMask
@@ -51,8 +55,10 @@ Public Enum enumTypeMask
     tDateFix
     tTimeFix
     tNumeric
+    tVariableLen  ' Variable length mask
+    tRegex        ' Custom mask via regular expressions
     [_First] = tOtherFix
-    [_Last] = tNumeric
+    [_Last] = tRegex
 End Enum
 
 Private Const SIMVOLS_MASKS As String = "#*@AБб"
@@ -68,6 +74,7 @@ Private mItems      As Collection
 
 Private mMask       As String
 Private mFormatValue As String
+Private mRegexPattern As String    ' Regular expression pattern for tRegex masks
 
 Private mBorderColorValid As Long
 Private mBorderColorNoValid As Long
@@ -286,6 +293,19 @@ Public Property Get formatValue() As String
     formatValue = mFormatValue
 End Property
 
+' Property:      RegexPattern
+' Description:   Property to get and set the regular expression pattern
+'                for regex-based masks
+' Returns/Parameters:
+'   RegexPattern - String defining the regular expression pattern
+Public Property Let regexPattern(ByRef regexPattern As String)
+    mRegexPattern = regexPattern
+End Property
+
+Public Property Get regexPattern() As String
+    regexPattern = mRegexPattern
+End Property
+
 ' Property:      borderColorValid
 ' Description:   Property to get and set the border color of the text field
 '                when input is valid
@@ -367,7 +387,7 @@ Public Property Get getItemByIndex(ByVal index As Integer) As clsTextboxMask
     If Not Me.Items Is Nothing Then Set getItemByIndex = Me.Items(index)
     Exit Property
 endGetItem:
-    ' Не очищаем ошибку, а логируем её для диагностики
+    ' Don't clear the error, but log it for diagnostics
     Select Case Err.Number
         Case 0, 5
         Case Else
@@ -401,9 +421,9 @@ End Property
 Public Property Get Version() As String
     Version = "Class: clsTextboxMask" & vbNewLine & _
             "Author: VBATools" & vbNewLine & _
-            "Version: 1.0.3" & vbNewLine & _
+            "Version: 1.0.4" & vbNewLine & _
             "Date of creation: 05.11.2025 10:30" & vbNewLine & _
-            "Date of update: 07.11.2025 16:50" & vbNewLine & _
+            "Date of update: 08.11.2025 12:00" & vbNewLine & _
             "License: Apache" & vbNewLine & _
             "Description: Class for creating textboxes with input masks in VBA" & vbNewLine & _
             "Supports various mask types: digital, letters, dates, phone numbers, etc." & vbNewLine & _
@@ -437,7 +457,7 @@ Public Sub addNumericField(ByRef inputControl As MSForms.TextBox, _
         Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
     Call addField(inputControl, String$(WorksheetFunction.Max(VBA.Len(minValue), VBA.Len(maxValue)), "#"), _
             enumTypeMask.tNumeric, numberFormat, allowDecimal, allowNegative, validColor, invalidColor, _
-            minValue, maxValue, showPlaceholder, placeholderColor)
+            minValue, maxValue, showPlaceholder, placeholderColor, vbNullString)
 End Sub
 
 ' Method:        addDateField
@@ -462,7 +482,7 @@ Public Sub addDateField(ByRef inputControl As MSForms.TextBox, ByVal dateMask As
         Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
         Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
     Call addField(inputControl, dateMask, enumTypeMask.tDateFix, dateFormat, False, False, validColor, invalidColor, _
-            minDate, maxDate, showPlaceholder, placeholderColor)
+            minDate, maxDate, showPlaceholder, placeholderColor, vbNullString)
 End Sub
 
 ' Method:        addTimeField
@@ -487,7 +507,7 @@ Public Sub addTimeField(ByRef inputControl As MSForms.TextBox, ByVal timeMask As
         Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
         Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
     Call addField(inputControl, timeMask, enumTypeMask.tTimeFix, timeFormat, False, False, validColor, invalidColor, _
-            0, 1, showPlaceholder, placeholderColor)
+            0, 1, showPlaceholder, placeholderColor, vbNullString)
 End Sub
 
 ' Method:        addTextField
@@ -506,7 +526,61 @@ Public Sub addTextField(ByRef inputControl As MSForms.TextBox, ByVal textMask As
         Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
         Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
     Call addField(inputControl, textMask, enumTypeMask.tOtherFix, vbNullString, False, False, validColor, invalidColor, _
-            0, 0, showPlaceholder, placeholderColor)
+            0, 0, showPlaceholder, placeholderColor, vbNullString)
+End Sub
+
+' Method:        addVariableLengthField
+' Description:   Method to add a new item with variable-length text mask to the collection
+' Parameters:
+'   inputControl    - Textbox object to apply the mask to
+'   maxLength       - Maximum allowed length for the input (0 = unlimited)
+'   textMask        - Mask string for text (e.g., "###@@@") - optional pattern for input validation
+'   showPlaceholder - (Optional) Flag for placeholder hint visibility (default True)
+'   validColor      - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   invalidColor    - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   placeholderColor - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
+' Example:       obj.addVariableLengthField(Me.TextBox1, 20, "###@@@") ' Up to 20 characters with mask pattern
+Public Sub addVariableLengthField(ByRef inputControl As MSForms.TextBox, _
+        ByVal maxLength As Integer, _
+        Optional textMask As String = vbNullString, _
+        Optional showPlaceholder As Boolean = True, _
+        Optional validColor As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
+    Dim maskStr     As String
+    If textMask <> vbNullString Then
+        If VBA.Len(textMask) < maxLength Then
+            maskStr = textMask & VBA.String$(maxLength - VBA.Len(textMask), "*")
+        Else
+            maskStr = textMask
+        End If
+    Else
+        ' If no mask is specified, use arbitrary text up to maxLength
+        maskStr = VBA.String$(maxLength, "*")
+    End If
+
+    Call addField(inputControl, maskStr, enumTypeMask.tVariableLen, vbNullString, False, False, validColor, invalidColor, _
+            0, maxLength, showPlaceholder, placeholderColor, vbNullString)
+End Sub
+
+' Method:        addRegexField
+' Description:   Method to add a new item with regex-based mask to the collection
+' Parameters:
+'   inputControl    - Textbox object to apply the mask to
+'   regexPattern    - Regular expression pattern for validation
+'   showPlaceholder - (Optional) Flag for placeholder hint visibility (default True)
+'   validColor      - (Optional) Border color when input is valid (default COLOR_DEFAULT_ON)
+'   invalidColor    - (Optional) Border color when input is invalid (default COLOR_DEFAULT_OFF)
+'   placeholderColor - (Optional) Hint text color (default COLOR_DEFAULT_HOLDER)
+' Example:       obj.addRegexField(Me.TextBox1, "^[A-Z]{3}\d{3}$") ' 3 uppercase letters followed by 3 digits
+Public Sub addRegexField(ByRef inputControl As MSForms.TextBox, _
+        ByVal regexPattern As String, _
+        Optional showPlaceholder As Boolean = True, _
+        Optional validColor As XlRgbColor = COLOR_DEFAULT_ON, _
+        Optional invalidColor As XlRgbColor = COLOR_DEFAULT_OFF, _
+        Optional placeholderColor As XlRgbColor = COLOR_DEFAULT_HOLDER)
+    Call addField(inputControl, vbNullString, enumTypeMask.tRegex, vbNullString, False, False, validColor, invalidColor, _
+            0, 0, showPlaceholder, placeholderColor, regexPattern)
 End Sub
 
 ' Method:        addField
@@ -537,7 +611,8 @@ Private Sub addField(ByRef inputControl As MSForms.TextBox, _
         ByVal minValue As Single, _
         ByVal maxValue As Single, _
         ByVal showPlaceholder As Boolean, _
-        ByVal placeholderColor As XlRgbColor)
+        ByVal placeholderColor As XlRgbColor, _
+        ByVal regexPattern As String)
 
     If inputControl Is Nothing Then
         Err.Raise vbObjectError + 101, "clsTextboxMask", "TextBox cannot be Nothing"
@@ -565,7 +640,7 @@ Private Sub addField(ByRef inputControl As MSForms.TextBox, _
     With itemCls
         Set .TextBox = inputControl
         .Mask = textMask
-        If .LenMask > 0 Then .TextBox.MaxLength = .LenMask
+        If .LenMask > 0 Then .TextBox.maxLength = .LenMask
 
         .borderColorValid = validColor
         .borderColorNoValid = invalidColor
@@ -607,6 +682,8 @@ Private Sub addField(ByRef inputControl As MSForms.TextBox, _
         .visibleLabelHolder = showPlaceholder
         .CurrentMaskType = maskType
         .formatValue = formatValue
+        ' Set the regular expression for this item
+        .regexPattern = regexPattern
         If formatValue = vbNullString Then .formatValue = maskType
         If mItems Is Nothing Then Set mItems = New Collection
         Call mItems.Add(itemCls, inputControl.Name)
@@ -641,16 +718,16 @@ End Sub
 ' Description:   Removes the input mask item from the collection and clears associated controls
 '                (placeholder hint and text field)
 Public Sub RemoveItem()
-    If Not Me.LabelHolder Is Nothing Then
-        On Error Resume Next
-        If IsControlInCollection(Me.TextBox.Name) Then
-            If Not Me.LabelHolder Is Nothing Then Call Me.TextBox.Parent.Controls.Remove(Me.LabelHolder.Name)
-            Call Me.Items.Remove(Me.TextBox.Name)
-        End If
-        Set Me.LabelHolder = Nothing
-        On Error GoTo 0
+    On Error Resume Next
+    If IsControlInCollection(Me.TextBox.Name) Then
+        If Not Me.LabelHolder Is Nothing Then Call Me.TextBox.Parent.Controls.Remove(Me.LabelHolder.Name)
+        Call Me.Items.Remove(Me.TextBox.Name)
     End If
+    On Error GoTo 0
+
+    Set Me.LabelHolder = Nothing
     Set Me.TextBox = Nothing
+    Set Me.Items = Nothing
 End Sub
 
 Private Sub mTextBox_change()
@@ -664,12 +741,26 @@ Private Sub mTextBox_change()
     Call IsValidInput
 End Sub
 
+' Method:        mTextBox_KeyPress
+' Description:   Event handler for key press events in the masked textbox
+'                Applies appropriate input validation based on the current mask type
+' Parameters:
+'   KeyAscii - ASCII code of the pressed key, modified in-place to allow/reject input
 Private Sub mTextBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
     Select Case Me.CurrentMaskType
         Case enumTypeMask.tDateFix, enumTypeMask.tTimeFix, enumTypeMask.tOtherFix:
             Call KeyAsciiFixLenText(KeyAscii)
         Case enumTypeMask.tNumeric
             Call NumericAll(KeyAscii)
+        Case enumTypeMask.tVariableLen
+            ' For variable length masks, apply mask validation if mask is specified
+            If Me.Mask <> vbNullString Then
+                Call KeyAsciiFixLenText(KeyAscii)
+            End If
+        Case enumTypeMask.tRegex
+            Call KeyAsciiRegex(KeyAscii)
+        Case Else
+            ' Default case - allow all characters
     End Select
 End Sub
 
@@ -739,7 +830,7 @@ Private Sub NumericAll(ByRef KeyAscii As MSForms.ReturnInteger)
             End If
         Case 46:
             If Me.IsDecemal Then
-                KeyAscii = IIf(InStr(1, Me.Value, ".") > 0, 0, 44)
+                KeyAscii = IIf(InStr(1, Me.Value, ".") > 0, 0, 46)
             Else
                 KeyAscii = 0
             End If
@@ -806,6 +897,78 @@ Private Sub UniCodeLettersNumeric(ByRef KeyAscii As MSForms.ReturnInteger)
     End If
 End Sub
 
+' Function to validate input against mask characters
+Private Function IsValidMaskInput() As Boolean
+    Dim i           As Integer
+    Dim maskChar    As String
+    Dim inputChar   As String
+
+    ' If mask is empty, consider it valid
+    If Me.Mask = vbNullString Then
+        IsValidMaskInput = True
+        Exit Function
+    End If
+
+    ' Check each character of the entered value against the mask
+    For i = 1 To Me.LenValue
+        maskChar = VBA.Mid$(Me.Mask, i, 1)
+        inputChar = VBA.Mid$(Me.Value, i, 1)
+
+        Select Case maskChar
+            Case "#":    ' Digits
+                IsValidMaskInput = IsValidDigit(Asc(inputChar))
+            Case "@":    ' Latin letters
+                IsValidMaskInput = IsValidLatinLetter(Asc(inputChar))
+            Case "A":    ' Latin letters and digits
+                IsValidMaskInput = IsValidDigit(Asc(inputChar)) Or IsValidLatinLetter(Asc(inputChar))
+            Case "Б":    ' Cyrillic letters
+                IsValidMaskInput = IsValidCyrillicLetter(Asc(inputChar))
+            Case "б":    ' Cyrillic letters and digits
+                IsValidMaskInput = IsValidDigit(Asc(inputChar)) Or IsValidCyrillicLetter(Asc(inputChar))
+            Case "*":    ' Any characters
+                IsValidMaskInput = True
+            Case Else:    ' Fixed characters
+                IsValidMaskInput = (inputChar = maskChar)
+        End Select
+
+        If Not IsValidMaskInput Then Exit Function
+    Next i
+
+    ' If less characters have been entered than the mask length, check possible remaining characters
+    If Me.LenValue < Me.LenMask Then
+        For i = Me.LenValue + 1 To Me.LenMask
+            maskChar = VBA.Mid$(Me.Mask, i, 1)
+            ' If the remaining mask characters are not fixed, consider it valid
+            ' (the user can still enter valid characters)
+            If InStr(1, SIMVOLS_MASKS, maskChar, vbBinaryCompare) > 0 Then
+                IsValidMaskInput = True
+                Exit Function
+            End If
+        Next i
+    End If
+End Function
+
+' Function to validate input against regex pattern
+Private Function IsValidRegexInput() As Boolean
+    ' Check if the regular expression library is available
+    On Error GoTo ErrorHandler
+    Dim regex       As Object
+    Set regex = CreateObject("VBScript.RegExp")
+
+    With regex
+        .pattern = Me.regexPattern
+        .IgnoreCase = False
+        .Global = False
+    End With
+
+    IsValidRegexInput = regex.Test(Me.Value)
+    Exit Function
+
+ErrorHandler:
+    ' If failed to create the regular expression object, return False
+    IsValidRegexInput = False
+End Function
+
 Private Function IsValidInput() As Boolean
     If mTextBox Is Nothing Then
         IsValidInput = False
@@ -831,6 +994,20 @@ Private Function IsValidInput() As Boolean
             Else
                 IsValidInput = False
             End If
+        Case enumTypeMask.tVariableLen
+            ' For variable-length masks, check that the length does not exceed the maximum
+            If Me.Max = 0 Then    ' If maximum length is not set, consider it valid
+                IsValidInput = True
+            Else
+                IsValidInput = (Me.LenValue <= Me.Max)
+            End If
+            ' Also check mask compliance if it's specified
+            If IsValidInput And Me.Mask <> vbNullString Then
+                IsValidInput = IsValidMaskInput()
+            End If
+        Case enumTypeMask.tRegex
+            ' For regular expressions, use the appropriate validation
+            IsValidInput = IsValidRegexInput()
         Case Else
             IsValidInput = (Me.LenValue = Me.LenMask)
     End Select
@@ -870,4 +1047,33 @@ Private Sub Class_Terminate()
     Set mTextBox = Nothing
     Set mLabelHolder = Nothing
     Set mItems = Nothing
+End Sub
+
+' Procedure:     KeyAsciiRegex
+' Description:   Handles key press events for regex-based masks, allowing only characters that match the regex pattern
+' Parameters:    KeyAscii - ASCII code of the pressed key
+Private Sub KeyAsciiRegex(ByRef KeyAscii As MSForms.ReturnInteger)
+    ' Allow backspace key
+    If KeyAscii = 8 Then
+        Exit Sub
+    End If
+
+    ' Check if the test value matches the regex pattern (or at least the beginning of it)
+    On Error GoTo ErrorHandler
+    Dim regex       As Object
+    Set regex = CreateObject("VBScript.RegExp")
+    On Error GoTo 0
+
+    With regex
+        .pattern = Me.regexPattern
+        .IgnoreCase = False
+        .Global = False
+        ' Check if the new character is valid according to the pattern
+        If Not .Test(VBA.ChrW$(KeyAscii)) Then KeyAscii = 0    ' Reject the character
+    End With
+    Exit Sub
+
+ErrorHandler:
+    ' If there's an error with the regex, allow the character to avoid blocking input
+    ' This could happen if the regex pattern is invalid
 End Sub
