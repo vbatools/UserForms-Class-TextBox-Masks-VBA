@@ -1,178 +1,272 @@
-# UserForms-Class-TextBox-Masks
+# VBA TextBox Masks Class
 
-![User Forms Example](User_Forms.png)
+**clsTextboxMask** - это мощный класс для VBA, который позволяет создавать текстовые поля с масками ввода в Excel и других приложениях Office. Он обеспечивает валидацию ввода, отображение плейсхолдеров и визуальное указание статуса заполнения поля.
 
-## Описание
-Этот проект содержит класс `clsTextboxMask` для Microsoft VBA, который позволяет создавать текстовые поля с масками ввода в UserForms. Класс обеспечивает проверку ввода, отображение заполнителя и визуальные индикаторы состояния заполнения поля.
+## Скриншоты
 
-## Возможности
-- Поддержка различных типов масок ввода:
-  - Числовые маски (с диапазоном, знаком и опцией десятичных чисел)
-  - Маски дат (с проверкой даты и проверкой диапазона)
-  - Маски времени (с проверкой времени)
-  - Маски текста фиксированной длины (с различными типами символов)
-  - Маски текста переменной длины (с дополнительной проверкой шаблона)
-  - Маски на основе регулярных выражений (пользовательские шаблоны проверки)
-- Визуальные индикаторы проверки (изменение цвета границы в зависимости от корректности ввода)
-- Отображение подсказки-заполнителя с ожидаемым форматом
-- Поддержка различных типов символов в масках:
-  - `#` - цифры
-  - `@` - латинские буквы
-  - `*` - любые символы
-  - `A` - латинские буквы и цифры
-  - `Б` - кириллические буквы
-  - `б` - кириллические буквы и цифры
+![User Forms](User_Forms.png)
+
+## Основные возможности
+
+- Поддержка различных типов масок ввода (цифры, даты, время, текст, регулярные выражения)
+- Валидация ввода в реальном времени
+- Отображение плейсхолдеров с различными статусами (пустое, частично заполненное, полностью заполненное, неверное)
+- Визуальная индикация корректности ввода через цвет границы
+- Поддержка числовых значений с ограничениями по диапазону, знаку и наличию десятичных знаков
+- Поддержка переменной длины текста
+- Поддержка валидации через регулярные выражения
 
 ## Установка
-1. Скопируйте файл `clsTextboxMask.cls` ваш VBA проект
-2. Импортируйте его в редактор VBA (например, в Excel или Word)
 
-## Использование
-Класс предоставляет несколько методов для добавления различных типов масок:
+1. Скопируйте файл `clsTextboxMask.cls` в ваш проект VBA
+2. Используйте класс в ваших UserForms
 
-### Numeric Mask
+## Основные свойства
+
+| Свойство | Тип | Описание |
+|----------|-----|----------|
+| `TextBox` | MSForms.TextBox | Ссылка на текстовое поле, к которому применяется маска |
+| `LabelPlaceholder` | MSForms.Label | Ссылка на метку плейсхолдера, которая отображает подсказки |
+| `Mask` | String | Маска ввода, определяющая допустимые символы |
+| `Value` | String | Текущее значение текстового поля |
+| `CurrentMaskType` | enumTypeMask | Тип текущей маски |
+| `Min` | Single | Минимальное значение для числовых полей |
+| `Max` | Single | Максимальное значение для числовых полей |
+| `IsNegative` | Boolean | Разрешены ли отрицательные значения |
+| `IsDecemal` | Boolean | Разрешены ли десятичные значения |
+| `BorderColorValid` | Long | Цвет границы при корректном вводе |
+| `BorderColorInvalid` | Long | Цвет границы при некорректном вводе |
+| `PlaceholderColor` | Long | Цвет текста плейсхолдера |
+| `PlaceholderEmpty` | String | Текст плейсхолдера для пустого поля |
+| `PlaceholderPartial` | String | Текст плейсхолдера для частично заполненного поля |
+| `PlaceholderComplete` | String | Текст плейсхолдера для полностью заполненного поля |
+| `PlaceholderInvalid` | String | Текст плейсхолдера для поля с некорректными данными |
+
+## Типы масок
+
+Класс поддерживает следующие типы масок:
+
+| Тип маски | Значение | Описание |
+|-----------|----------|----------|
+| `tOtherFix` | 1 | Фиксированная маска с различными символами |
+| `tDateFix` | 2 | Фиксированная маска для дат |
+| `tTimeFix` | 3 | Фиксированная маска для времени |
+| `tNumeric` | 4 | Числовая маска с возможностью ограничения диапазона |
+| `tVariableLen` | 5 | Маска с переменной длиной |
+| `tRegex` | 6 | Маска на основе регулярных выражений |
+
+## Основные методы
+
+### `AddFieldNumeric`
+Добавляет числовое поле с заданными параметрами валидации.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemNumeric(TextBox1, 0, 100, True, False)
+Dim numField As New clsTextboxMask
+Call numField.AddFieldNumeric(Me.TextBox1, 0, 100, True, False)
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
+**Параметры:**
+- `inputTextBox` - текстовое поле, к которому применяется маска
+- `minValue` - минимальное допустимое значение
+- `maxValue` - максимальное допустимое значение
+- `allowDecimal` - разрешение на ввод десятичных значений
+- `allowNegative` - разрешение на ввод отрицательных значений
+- `showPlaceholder` - отображение плейсхолдера (опционально)
+- `numberFormat` - формат отображения числа (опционально)
+- `BorderColorValid` - цвет границы при корректном вводе (опционально)
+- `BorderColorInvalid` - цвет границы при некорректном вводе (опционально)
+- `PlaceholderColor` - цвет плейсхолдера (опционально)
+- `PlaceholderEmpty` - текст плейсхолдера для пустого поля (опционально)
+- `PlaceholderPartial` - текст плейсхолдера для частично заполненного поля (опционально)
+- `PlaceholderComplete` - текст плейсхолдера для полностью заполненного поля (опционально)
+- `PlaceholderInvalid` - текст плейсхолдера для поля с некорректными данными (опционально)
+- `PlaceHolderTemplete` - шаблон плейсхолдера (опционально)
+
+### `AddFieldDate`
+Добавляет поле ввода даты с заданными параметрами валидации.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemNumeric(TextBox:=TextBox1, snMin:=0, snMax:=100, IsDecemal:=True, IsNegative:=False)
+Dim dateField As New clsTextboxMask
+Call dateField.AddFieldDate(Me.TextBox2, "ddmmyy", #1/1/2020#, #12/31/2030#, "dd.mm.yyyy")
 ```
 
-Using all named arguments with optional parameters:
+**Параметры:**
+- `inputTextBox` - текстовое поле, к которому применяется маска
+- `dateMask` - маска ввода даты
+- `minDate` - минимальная допустимая дата
+- `maxDate` - максимальная допустимая дата
+- `dateFormat` - формат отображения даты (опционально)
+- `showPlaceholder` - отображение плейсхолдера (опционально)
+- `BorderColorValid` - цвет границы при корректном вводе (опционально)
+- `BorderColorInvalid` - цвет границы при некорректном вводе (опционально)
+- `PlaceholderColor` - цвет плейсхолдера (опционально)
+- `PlaceholderEmpty` - текст плейсхолдера для пустого поля (опционально)
+- `PlaceholderPartial` - текст плейсхолдера для частично заполненного поля (опционально)
+- `PlaceholderComplete` - текст плейсхолдера для полностью заполненного поля (опционально)
+- `PlaceholderInvalid` - текст плейсхолдера для поля с некорректными данными (опционально)
+- `PlaceHolderTemplete` - шаблон плейсхолдера (опционально)
+
+### `AddFieldTime`
+Добавляет поле ввода времени с заданными параметрами валидации.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemNumeric(TextBox:=TextBox1, snMin:=0, snMax:=100, IsDecemal:=True, IsNegative:=False, _
-                                visibleLabelHolder:=True, formatNumeric:="#.0", borderColorValid:=&H8000006, _
-                                borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
+Dim timeField As New clsTextboxMask
+Call timeField.AddFieldTime(Me.TextBox3, "hhmm", #0:00:00#, #23:59#, "hh:mm")
 ```
 
-### Date Mask
+**Параметры:**
+- `inputTextBox` - текстовое поле, к которому применяется маска
+- `timeMask` - маска ввода времени
+- `minTime` - минимальное допустимое время
+- `maxTime` - максимальное допустимое время
+- `timeFormat` - формат отображения времени (опционально)
+- `showPlaceholder` - отображение плейсхолдера (опционально)
+- `BorderColorValid` - цвет границы при корректном вводе (опционально)
+- `BorderColorInvalid` - цвет границы при некорректном вводе (опционально)
+- `PlaceholderColor` - цвет плейсхолдера (опционально)
+- `PlaceholderEmpty` - текст плейсхолдера для пустого поля (опционально)
+- `PlaceholderPartial` - текст плейсхолдера для частично заполненного поля (опционально)
+- `PlaceholderComplete` - текст плейсхолдера для полностью заполненного поля (опционально)
+- `PlaceholderInvalid` - текст плейсхолдера для поля с некорректными данными (опционально)
+- `PlaceHolderTemplete` - шаблон плейсхолдера (опционально)
+
+### `AddFieldText`
+Добавляет текстовое поле с заданной маской ввода.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenDate(TextBox1, "##.##.####", #1/1/2000#, #12/31/2030#, "dd.mm.yyyy")
+Dim textField As New clsTextboxMask
+Call textField.AddFieldText(Me.TextBox4, "AAA-99")  ' Буквы-цифры
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
+**Параметры:**
+- `inputTextBox` - текстовое поле, к которому применяется маска
+- `textMask` - маска ввода текста
+- `showPlaceholder` - отображение плейсхолдера (опционально)
+- `BorderColorValid` - цвет границы при корректном вводе (опционально)
+- `BorderColorInvalid` - цвет границы при некорректном вводе (опционально)
+- `PlaceholderColor` - цвет плейсхолдера (опционально)
+- `PlaceholderEmpty` - текст плейсхолдера для пустого поля (опционально)
+- `PlaceholderPartial` - текст плейсхолдера для частично заполненного поля (опционально)
+- `PlaceholderComplete` - текст плейсхолдера для полностью заполненного поля (опционально)
+- `PlaceholderInvalid` - текст плейсхолдера для поля с некорректными данными (опционально)
+- `PlaceHolderTemplete` - шаблон плейсхолдера (опционально)
+
+### `AddFieldVariableLength`
+Добавляет поле с переменной длиной текста.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenDate(TextBox:=TextBox1, Mask:="##.##.####", minDate:=#1/1/2000#, maxDate:=#12/31/2030#, formatDate:="dd.mm.yyyy")
+Dim varField As New clsTextboxMask
+Call varField.AddFieldVariableLength(Me.TextBox5, 50, "Текст")
 ```
 
-Using all named arguments with optional parameters:
+**Параметры:**
+- `inputTextBox` - текстовое поле, к которому применяется маска
+- `maxLength` - максимальная длина текста
+- `textMask` - маска ввода текста (опционально)
+- `showPlaceholder` - отображение плейсхолдера (опционально)
+- `BorderColorValid` - цвет границы при корректном вводе (опционально)
+- `BorderColorInvalid` - цвет границы при некорректном вводе (опционально)
+- `PlaceholderColor` - цвет плейсхолдера (опционально)
+- `PlaceholderEmpty` - текст плейсхолдера для пустого поля (опционально)
+- `PlaceholderPartial` - текст плейсхолдера для частично заполненного поля (опционально)
+- `PlaceholderComplete` - текст плейсхолдера для полностью заполненного поля (опционально)
+- `PlaceholderInvalid` - текст плейсхолдера для поля с некорректными данными (опционально)
+- `PlaceHolderTemplete` - шаблон плейсхолдера (опционально)
+
+### `AddFieldRegex`
+Добавляет поле с валидацией через регулярное выражение.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenDate(TextBox:=TextBox1, Mask:="##.##.####", minDate:=#1/1/2000#, maxDate:=#12/31/2030#, _
-                                   formatDate:="dd.mm.yyyy", visibleLabelHolder:=True, borderColorValid:=&H8000006, _
-                                   borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
+Dim regexField As New clsTextboxMask
+Call regexField.AddFieldRegex(Me.TextBox6, "^[A-Z]{2}\d{4}$", "[A-Z0-9]")
 ```
 
-### Time Mask
+**Параметры:**
+- `inputTextBox` - текстовое поле, к которому применяется маска
+- `RegexPattern` - паттерн регулярного выражения для валидации
+- `RegexFilter` - фильтр регулярного выражения
+- `showPlaceholder` - отображение плейсхолдера (опционально)
+- `BorderColorValid` - цвет границы при корректном вводе (опционально)
+- `BorderColorInvalid` - цвет границы при некорректном вводе (опционально)
+- `PlaceholderColor` - цвет плейсхолдера (опционально)
+- `PlaceholderEmpty` - текст плейсхолдера для пустого поля (опционально)
+- `PlaceholderPartial` - текст плейсхолдера для частично заполненного поля (опционально)
+- `PlaceholderComplete` - текст плейсхолдера для полностью заполненного поля (опционально)
+- `PlaceholderInvalid` - текст плейсхолдера для поля с некорректными данными (опционально)
+- `PlaceHolderTemplete` - шаблон плейсхолдера (опционально)
+
+### `IsValid`
+Проверяет корректность введенных данных в текстовом поле.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenTime(TextBox1, "##:##", #0:00:00#, #23:59:59#, "hh:mm")
+If myField.IsValid() Then
+    MsgBox "Данные корректны!"
+Else
+    MsgBox "Данные некорректны!"
+End If
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
+### `Clear`
+Очищает текстовое поле.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenTime(TextBox:=TextBox1, Mask:="##:##", minDate:=#0:00:00#, maxDate:=#23:59:59#, formatDate:="hh:mm")
+myField.Clear()
 ```
 
-Using all named arguments with optional parameters:
+### `SetFocus`
+Устанавливает фокус на текстовое поле.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenTime(TextBox:=TextBox1, Mask:="##:##", minDate:=#0:00:00#, maxDate:=#23:59:59#, _
-                                   formatDate:="hh:mm", visibleLabelHolder:=True, borderColorValid:=&H8000006, _
-                                   borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
+myField.SetFocus()
 ```
 
-### Fixed-Length Text Mask
+### `RemoveItem`
+Удаляет элемент маски текстового поля и связанные с ним компоненты.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLen(TextBox1, "###@@@")
+myField.RemoveItem()
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
+## Символы маски
+
+При создании текстовых масок используются следующие символы:
+
+| Символ | Описание |
+|--------|----------|
+| `#` | Цифры (0-9) |
+| `@` | Латинские буквы (A-Z, a-z) |
+| `A` | Латинские буквы и цифры (A-Z, a-z, 0-9) |
+| `Б` | Кирилические буквы |
+| `б` | Кириллические буквы и цифры |
+| `*` | Любые символы |
+| `[любой символ]` | Фиксированный символ (например, `-`, `(`, `)`, `/`, и т.д.) |
+
+## Примеры использования
+
+### 1. Числовое поле с ограничениями:
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLen(TextBox:=TextBox1, Mask:="###@@@")
+Dim numField As New clsTextboxMask
+Call numField.AddFieldNumeric(Me.TextBox1, 0, 100, True, False)
 ```
 
-Using all named arguments with optional parameters:
+### 2. Поле даты:
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLen(TextBox:=TextBox1, Mask:="###@@@", visibleLabelHolder:=True, _
-                               borderColorValid:=&H8000006, borderColorNoValid:=&HC0C0FF, _
-                               foreColorHolder:=&H808080)
+Dim dateField As New clsTextboxMask
+Call dateField.AddFieldDate(Me.TextBox2, "ddmmyy", #1/1/2020#, #12/31/2030#, "dd.mm.yyyy")
 ```
 
-### Variable-length Text Mask
+### 3. Текстовое поле с маской:
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemVariableLen(TextBox1, 20, "###@@@")
+Dim textField As New clsTextboxMask
+Call textField.AddFieldText(Me.TextBox3, "AAA-99")  ' Буквы-цифры
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemVariableLen(TextBox:=TextBox1, maxLength:=20, textMask:="###@@@")
-```
+## Зависимости
 
-Using all named arguments with optional parameters:
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemVariableLen(TextBox:=TextBox1, maxLength:=20, textMask:="###@@@", _
-                                  visibleLabelHolder:=True, borderColorValid:=&H8000006, _
-                                  borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
-```
-
-### Regular Expression-based Mask
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemRegex(TextBox1, "^[A-Z]{3}\d{3}$")
-```
-
-Using named arguments (walrus operator equivalent in VBA):
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemRegex(TextBox:=TextBox1, regexPattern:="^[A-Z]{3}\d{3}$")
-```
-
-Using all named arguments with optional parameters:
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemRegex(TextBox:=TextBox1, regexPattern:="^[A-Z]{3}\d{3}$", _
-                            visibleLabelHolder:=True, borderColorValid:=&H8000006, _
-                            borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
-```
-
-## Параметры
-- `TextBox` - объект текстового поля, к которому применяется маска
-- `Mask` - строка маски ввода
-- `Min/Max` - минимальное и максимальное разрешенные значения (для числовых и датовых масок)
-- `IsDecimal` - разрешить ввод десятичных чисел
-- `IsNegative` - разрешить ввод отрицательных чисел
-- `formatValue` - формат отображения значения (для дат и чисел)
-- `visibleLabelHolder` - видимость подсказки-заполнителя
-- `borderColorOn/borderColorOff` - цвета границ для корректного и некорректного ввода
-
-## Свойства
-- `Value` - текущее значение текстового поля
-- `Mask` - маска ввода
-- `LenValue` - длина текущего значения
-- `LenMask` - длина маски
-- `RemainingChars` - количество оставшихся символов до полного заполнения
-- `IsValid` - проверка корректности ввода
-
-## Автор
-VBATools
-
-## Version
-1.0.4
+- MSForms.TextBox
+- MSForms.Label
+- VBScript.RegExp (для валидации через регулярные выражения)
 
 ## Лицензия
-Apache License
+
+Проект лицензирован под Apache License 2.0 - смотри файл [LICENSE](LICENSE) для подробностей.

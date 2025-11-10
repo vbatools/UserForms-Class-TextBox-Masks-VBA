@@ -1,178 +1,272 @@
-# UserForms-Class-TextBox-Masks
+# VBA TextBox Masks Class
 
-![User Forms Example](User_Forms.png)
+**clsTextboxMask** is a powerful VBA class that allows creating text fields with input masks in Excel and other Office applications. It provides input validation, placeholder display, and visual indication of field fill status.
 
-## Description
-This project contains the `clsTextboxMask` class for Microsoft VBA, which allows creating textboxes with input masks in UserForms. The class provides input validation, placeholder display, and visual indicators of the field filling status.
+## Screenshots
 
-## Features
-- Support for various input mask types:
-  - Numeric masks (with range, sign, and decimal options)
-  - Date masks (with date validation and range checking)
-  - Time masks (with time validation)
-  - Fixed-length text masks (with various character types)
-  - Variable-length text masks (with optional pattern validation)
-  - Regular expression-based masks (custom validation patterns)
-- Visual validation indicators (border color changes based on input validity)
-- Placeholder hint display with expected format
-- Support for various character types in masks:
-  - `#` - digits
-  - `@` - Latin letters
-  - `*` - any characters
-  - `A` - Latin letters and digits
-  - `Б` - Cyrillic letters
-  - `б` - Cyrillic letters and digits
+![User Forms](User_Forms.png)
+
+## Key Features
+
+- Support for various input mask types (numbers, dates, time, text, regular expressions)
+- Real-time input validation
+- Display of placeholders with different statuses (empty, partially filled, completely filled, incorrect)
+- Visual indication of input correctness through border color
+- Support for numeric values with range, sign, and decimal constraints
+- Support for variable-length text
+- Support for validation via regular expressions
 
 ## Installation
+
 1. Copy the `clsTextboxMask.cls` file to your VBA project
-2. Import it into the VBA editor (e.g., in Excel or Word)
+2. Use the class in your UserForms
 
-## Usage
-The class provides several methods for adding different mask types:
+## Main Properties
 
-### Numeric Mask
+| Property | Type | Description |
+|----------|------|-------------|
+| `TextBox` | MSForms.TextBox | Reference to the text box to which the mask is applied |
+| `LabelPlaceholder` | MSForms.Label | Reference to the placeholder label that displays hints |
+| `Mask` | String | Input mask defining allowed characters |
+| `Value` | String | Current value of the text field |
+| `CurrentMaskType` | enumTypeMask | Type of current mask |
+| `Min` | Single | Minimum value for numeric fields |
+| `Max` | Single | Maximum value for numeric fields |
+| `IsNegative` | Boolean | Whether negative values are allowed |
+| `IsDecemal` | Boolean | Whether decimal values are allowed |
+| `BorderColorValid` | Long | Border color when input is correct |
+| `BorderColorInvalid` | Long | Border color when input is incorrect |
+| `PlaceholderColor` | Long | Placeholder text color |
+| `PlaceholderEmpty` | String | Placeholder text for empty field |
+| `PlaceholderPartial` | String | Placeholder text for partially filled field |
+| `PlaceholderComplete` | String | Placeholder text for completely filled field |
+| `PlaceholderInvalid` | String | Placeholder text for field with incorrect data |
+
+## Mask Types
+
+The class supports the following mask types:
+
+| Mask Type | Value | Description |
+|-----------|-------|-------------|
+| `tOtherFix` | 1 | Fixed mask with various characters |
+| `tDateFix` | 2 | Fixed mask for dates |
+| `tTimeFix` | 3 | Fixed mask for time |
+| `tNumeric` | 4 | Numeric mask with range limitation capability |
+| `tVariableLen` | 5 | Variable-length mask |
+| `tRegex` | 6 | Regular expression-based mask |
+
+## Main Methods
+
+### `AddFieldNumeric`
+Adds a numeric field with specified validation parameters.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemNumeric(TextBox1, 0, 100, True, False)
+Dim numField As New clsTextboxMask
+Call numField.AddFieldNumeric(Me.TextBox1, 0, 100, True, False)
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
+**Parameters:**
+- `inputTextBox` - text field to which the mask is applied
+- `minValue` - minimum allowed value
+- `maxValue` - maximum allowed value
+- `allowDecimal` - permission for decimal values input
+- `allowNegative` - permission for negative values input
+- `showPlaceholder` - placeholder display (optional)
+- `numberFormat` - number display format (optional)
+- `BorderColorValid` - border color when input is correct (optional)
+- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `PlaceholderColor` - placeholder color (optional)
+- `PlaceholderEmpty` - placeholder text for empty field (optional)
+- `PlaceholderPartial` - placeholder text for partially filled field (optional)
+- `PlaceholderComplete` - placeholder text for completely filled field (optional)
+- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceHolderTemplete` - placeholder template (optional)
+
+### `AddFieldDate`
+Adds a date input field with specified validation parameters.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemNumeric(TextBox:=TextBox1, snMin:=0, snMax:=100, IsDecemal:=True, IsNegative:=False)
+Dim dateField As New clsTextboxMask
+Call dateField.AddFieldDate(Me.TextBox2, "ddmmyy", #1/1/2020#, #12/31/2030#, "dd.mm.yyyy")
 ```
 
-Using all named arguments with optional parameters:
+**Parameters:**
+- `inputTextBox` - text field to which the mask is applied
+- `dateMask` - date input mask
+- `minDate` - minimum allowed date
+- `maxDate` - maximum allowed date
+- `dateFormat` - date display format (optional)
+- `showPlaceholder` - placeholder display (optional)
+- `BorderColorValid` - border color when input is correct (optional)
+- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `PlaceholderColor` - placeholder color (optional)
+- `PlaceholderEmpty` - placeholder text for empty field (optional)
+- `PlaceholderPartial` - placeholder text for partially filled field (optional)
+- `PlaceholderComplete` - placeholder text for completely filled field (optional)
+- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceHolderTemplete` - placeholder template (optional)
+
+### `AddFieldTime`
+Adds a time input field with specified validation parameters.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemNumeric(TextBox:=TextBox1, snMin:=0, snMax:=100, IsDecemal:=True, IsNegative:=False, _
-                                visibleLabelHolder:=True, formatNumeric:="#.0", borderColorValid:=&H8000006, _
-                                borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
+Dim timeField As New clsTextboxMask
+Call timeField.AddFieldTime(Me.TextBox3, "hhmm", #0:00:00#, #23:59#, "hh:mm")
 ```
 
-### Date Mask
+**Parameters:**
+- `inputTextBox` - text field to which the mask is applied
+- `timeMask` - time input mask
+- `minTime` - minimum allowed time
+- `maxTime` - maximum allowed time
+- `timeFormat` - time display format (optional)
+- `showPlaceholder` - placeholder display (optional)
+- `BorderColorValid` - border color when input is correct (optional)
+- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `PlaceholderColor` - placeholder color (optional)
+- `PlaceholderEmpty` - placeholder text for empty field (optional)
+- `PlaceholderPartial` - placeholder text for partially filled field (optional)
+- `PlaceholderComplete` - placeholder text for completely filled field (optional)
+- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceHolderTemplete` - placeholder template (optional)
+
+### `AddFieldText`
+Adds a text field with a specified input mask.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenDate(TextBox1, "##.##.####", #1/1/2000#, #12/31/2030#, "dd.mm.yyyy")
+Dim textField As New clsTextboxMask
+Call textField.AddFieldText(Me.TextBox4, "AAA-99")  ' Letters-digits
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
+**Parameters:**
+- `inputTextBox` - text field to which the mask is applied
+- `textMask` - text input mask
+- `showPlaceholder` - placeholder display (optional)
+- `BorderColorValid` - border color when input is correct (optional)
+- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `PlaceholderColor` - placeholder color (optional)
+- `PlaceholderEmpty` - placeholder text for empty field (optional)
+- `PlaceholderPartial` - placeholder text for partially filled field (optional)
+- `PlaceholderComplete` - placeholder text for completely filled field (optional)
+- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceHolderTemplete` - placeholder template (optional)
+
+### `AddFieldVariableLength`
+Adds a field with variable text length.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenDate(TextBox:=TextBox1, Mask:="##.##.####", minDate:=#1/1/2000#, maxDate:=#12/31/2030#, formatDate:="dd.mm.yyyy")
+Dim varField As New clsTextboxMask
+Call varField.AddFieldVariableLength(Me.TextBox5, 50, "Text")
 ```
 
-Using all named arguments with optional parameters:
+**Parameters:**
+- `inputTextBox` - text field to which the mask is applied
+- `maxLength` - maximum text length
+- `textMask` - text input mask (optional)
+- `showPlaceholder` - placeholder display (optional)
+- `BorderColorValid` - border color when input is correct (optional)
+- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `PlaceholderColor` - placeholder color (optional)
+- `PlaceholderEmpty` - placeholder text for empty field (optional)
+- `PlaceholderPartial` - placeholder text for partially filled field (optional)
+- `PlaceholderComplete` - placeholder text for completely filled field (optional)
+- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceHolderTemplete` - placeholder template (optional)
+
+### `AddFieldRegex`
+Adds a field with validation via regular expression.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenDate(TextBox:=TextBox1, Mask:="##.##.####", minDate:=#1/1/2000#, maxDate:=#12/31/2030#, _
-                                   formatDate:="dd.mm.yyyy", visibleLabelHolder:=True, borderColorValid:=&H8000006, _
-                                   borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
+Dim regexField As New clsTextboxMask
+Call regexField.AddFieldRegex(Me.TextBox6, "^[A-Z]{2}\d{4}$", "[A-Z0-9]")
 ```
 
-### Time Mask
+**Parameters:**
+- `inputTextBox` - text field to which the mask is applied
+- `RegexPattern` - regular expression pattern for validation
+- `RegexFilter` - regular expression filter
+- `showPlaceholder` - placeholder display (optional)
+- `BorderColorValid` - border color when input is correct (optional)
+- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `PlaceholderColor` - placeholder color (optional)
+- `PlaceholderEmpty` - placeholder text for empty field (optional)
+- `PlaceholderPartial` - placeholder text for partially filled field (optional)
+- `PlaceholderComplete` - placeholder text for completely filled field (optional)
+- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceHolderTemplete` - placeholder template (optional)
+
+### `IsValid`
+Checks the correctness of data entered in the text field.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenTime(TextBox1, "##:##", #0:00:00#, #23:59:59#, "hh:mm")
+If myField.IsValid() Then
+    MsgBox "Data is correct!"
+Else
+    MsgBox "Data is incorrect!"
+End If
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
+### `Clear`
+Clears the text field.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenTime(TextBox:=TextBox1, Mask:="##:##", minDate:=#0:00:00#, maxDate:=#23:59:59#, formatDate:="hh:mm")
+myField.Clear()
 ```
 
-Using all named arguments with optional parameters:
+### `SetFocus`
+Sets focus to the text field.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLenTime(TextBox:=TextBox1, Mask:="##:##", minDate:=#0:00:00#, maxDate:=#23:59:59#, _
-                                   formatDate:="hh:mm", visibleLabelHolder:=True, borderColorValid:=&H8000006, _
-                                   borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
+myField.SetFocus()
 ```
 
-### Fixed-Length Text Mask
+### `RemoveItem`
+Removes the text box mask item and associated components.
+
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLen(TextBox1, "###@@@")
+myField.RemoveItem()
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
+## Mask Symbols
+
+When creating text masks, the following symbols are used:
+
+| Symbol | Description |
+|--------|-------------|
+| `#` | Digits (0-9) |
+| `@` | Latin letters (A-Z, a-z) |
+| `A` | Latin letters and digits (A-Z, a-z, 0-9) |
+| `Б` | Cyrillic letters |
+| `б` | Cyrillic letters and digits |
+| `*` | Any characters |
+| `[any character]` | Fixed character (e.g., `-`, `(`, `)`, `/`, etc.) |
+
+## Usage Examples
+
+### 1. Numeric field with constraints:
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLen(TextBox:=TextBox1, Mask:="###@@@")
+Dim numField As New clsTextboxMask
+Call numField.AddFieldNumeric(Me.TextBox1, 0, 100, True, False)
 ```
 
-Using all named arguments with optional parameters:
+### 2. Date field:
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemFixLen(TextBox:=TextBox1, Mask:="###@@@", visibleLabelHolder:=True, _
-                               borderColorValid:=&H8000006, borderColorNoValid:=&HC0C0FF, _
-                               foreColorHolder:=&H808080)
+Dim dateField As New clsTextboxMask
+Call dateField.AddFieldDate(Me.TextBox2, "ddmmyy", #1/1/2020#, #12/31/2030#, "dd.mm.yyyy")
 ```
 
-### Variable-length Text Mask
+### 3. Text field with mask:
 ```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemVariableLen(TextBox1, 20, "###@@@")
+Dim textField As New clsTextboxMask
+Call textField.AddFieldText(Me.TextBox3, "AAA-99")  ' Letters-digits
 ```
 
-Using named arguments (walrus operator equivalent in VBA):
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemVariableLen(TextBox:=TextBox1, maxLength:=20, textMask:="###@@@")
-```
+## Dependencies
 
-Using all named arguments with optional parameters:
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemVariableLen(TextBox:=TextBox1, maxLength:=20, textMask:="###@@@", _
-                                  visibleLabelHolder:=True, borderColorValid:=&H8000006, _
-                                  borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
-```
-
-### Regular Expression-based Mask
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemRegex(TextBox1, "^[A-Z]{3}\d{3}$")
-```
-
-Using named arguments (walrus operator equivalent in VBA):
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemRegex(TextBox:=TextBox1, regexPattern:="^[A-Z]{3}\d{3}$")
-```
-
-Using all named arguments with optional parameters:
-```vba
-Dim textboxMask As New clsTextboxMask
-Call textboxMask.addItemRegex(TextBox:=TextBox1, regexPattern:="^[A-Z]{3}\d{3}$", _
-                            visibleLabelHolder:=True, borderColorValid:=&H8000006, _
-                            borderColorNoValid:=&HC0C0FF, foreColorHolder:=&H808080)
-```
-
-## Parameters
-- `TextBox` - textbox object to apply the mask to
-- `Mask` - input mask string
-- `Min/Max` - minimum and maximum allowed values (for numeric and date masks)
-- `IsDecimal` - allow decimal input
-- `IsNegative` - allow negative input
-- `formatValue` - value display format (for dates and numbers)
-- `visibleLabelHolder` - visibility of placeholder hint
-- `borderColorOn/borderColorOff` - border colors for valid and invalid input
-
-## Properties
-- `Value` - current textbox value
-- `Mask` - input mask
-- `LenValue` - length of current value
-- `LenMask` - length of mask
-- `RemainingChars` - number of remaining characters until full fill
-- `IsValid` - input validation check
-
-## Author
-VBATools
-
-## Version
-1.0.4
+- MSForms.TextBox
+- MSForms.Label
+- VBScript.RegExp (for regular expression validation)
 
 ## License
-Apache License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
