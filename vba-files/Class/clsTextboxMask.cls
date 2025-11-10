@@ -15,6 +15,7 @@ Option Explicit
 ' Version: 1.0.6
 ' Creation Date: 05.11.2025 10:30
 ' Last Update Date: 10.11.2025 19:57
+' License: Apache License
 ' #####################################################################################################################
 ' Purpose:
 '   Class for creating textbox fields with input masks in VBA. Provides input validation, placeholder display
@@ -33,15 +34,24 @@ Option Explicit
 ' Usage Examples:
 '   1. Creating a numeric field with constraints:
 '      Dim numField As New clsTextboxMask
-'      Call numField.AddFieldNumeric(Me.TextBox1, 0, 100, True, False)
+'      Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
+'                                   minValue:=0, _
+'                                   maxValue:=100, _
+'                                   allowDecimal:=True, _
+'                                   allowNegative:=False)
 '
 '   2. Creating a date field:
 '      Dim dateField As New clsTextboxMask
-'      Call dateField.AddFieldDate(Me.TextBox2, "ddmmyy", #1/1/2020#, #12/31/2030#, "dd.mm.yyyy")
+'      Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
+'                                 dateMask:="##.##.####", _
+'                                 minDate:=#1/1/2020#, _
+'                                 maxDate:=#12/31/2030#, _
+'                                 dateFormat:="dd.mm.yyyy")
 '
 '   3. Creating a text field with mask:
 '      Dim textField As New clsTextboxMask
-'      Call textField.AddFieldText(Me.TextBox3, "AAA-99")  ' Letters-digits
+'      Call textField.AddFieldText(inputTextBox:=Me.TextBox3, _
+'                                 textMask:="+7(*##) @# A# #Б#")  ' Letters-digits
 '
 ' Dependencies:
 '   - MSForms.TextBox
@@ -83,9 +93,9 @@ Private mPlaceholderEmpty As String         ' Placeholder text when field is emp
 Private mPlaceholderPartial As String       ' Placeholder text when field is partially filled
 Private mPlaceholderComplete As String      ' Placeholder text when field is completely filled
 Private mPlaceholderInvalid As String       ' Placeholder text when field contains invalid data
-Private mPlaceholderTemplete As String      ' Example text for placeholders
+Private mPlaceholderTemplate As String      ' Example text for placeholders
 
-Private mIsDecemal  As Boolean
+Private mIsDecimal  As Boolean
 Private mIsNegative As Boolean
 
 Private mMin        As Single
@@ -97,6 +107,17 @@ Public Property Get ConstSimvolsMasks() As String
     ConstSimvolsMasks = mSimvolsMasks
 End Property
 
+' #####################################################################################################################
+' Property: PlaceholderMask
+' #####################################################################################################################
+' Purpose:
+'   Returns the current placeholder mask, which shows the remaining characters that need to be filled in the textbox
+'   If the textbox value is shorter than the mask length, the placeholder will show the remaining mask characters
+'   If the textbox value is equal to or longer than the mask length, the placeholder will be empty
+'
+' Return Value:
+'   String - The placeholder mask showing remaining characters to be filled
+' #####################################################################################################################
 Public Property Get PlaceholderMask() As String
     If Me.TextBox Is Nothing Then Exit Property
     If Me.LenMask >= Me.LenValue Then
@@ -142,12 +163,12 @@ Public Property Let PlaceholderInvalid(ByVal Value As String)
     'Call UpdatePlaceholder
 End Property
 
-Public Property Get PlaceHolderTemplete() As String
-    PlaceHolderTemplete = mPlaceholderTemplete
+Public Property Get PlaceHolderTemplate() As String
+    PlaceHolderTemplate = mPlaceholderTemplate
 End Property
 
-Public Property Let PlaceHolderTemplete(ByVal Value As String)
-    mPlaceholderTemplete = Value
+Public Property Let PlaceHolderTemplate(ByVal Value As String)
+    mPlaceholderTemplate = Value
     'Call UpdatePlaceholder
 End Property
 
@@ -209,12 +230,12 @@ Public Property Let IsNegative(ByVal Value As Boolean)
     mIsNegative = Value
 End Property
 
-Public Property Get IsDecemal() As Boolean
-    IsDecemal = mIsDecemal
+Public Property Get IsDecimal() As Boolean
+    IsDecimal = mIsDecimal
 End Property
 
-Public Property Let IsDecemal(ByVal Value As Boolean)
-    mIsDecemal = Value
+Public Property Let IsDecimal(ByVal Value As Boolean)
+    mIsDecimal = Value
 End Property
 
 Public Property Get TextBox() As MSForms.TextBox
@@ -392,7 +413,7 @@ Public Sub AddFieldNumeric(ByRef inputTextBox As MSForms.TextBox, _
         Optional PlaceholderPartial As String = vbNullString, _
         Optional PlaceholderComplete As String = vbNullString, _
         Optional PlaceholderInvalid As String = vbNullString, _
-        Optional PlaceHolderTemplete As String = "{holder}")
+        Optional PlaceHolderTemplate As String = "{holder}")
     Call AddField(inputTextBox:=inputTextBox, textMask:=VBA.String$(WorksheetFunction.Max(VBA.Len(minValue), VBA.Len(maxValue)), "#"), _
             maskType:=enumTypeMask.tNumeric, FormatValue:=numberFormat, allowDecimal:=allowDecimal, allowNegative:=allowNegative, _
             BorderColorValid:=BorderColorValid, BorderColorInvalid:=BorderColorInvalid, minValue:=minValue, maxValue:=maxValue, _
@@ -401,7 +422,7 @@ Public Sub AddFieldNumeric(ByRef inputTextBox As MSForms.TextBox, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
             PlaceholderInvalid:=PlaceholderInvalid, _
-            PlaceHolderTemplete:=PlaceHolderTemplete, _
+            PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
 ' #####################################################################################################################
@@ -439,7 +460,7 @@ Public Sub AddFieldDate(ByRef inputTextBox As MSForms.TextBox, ByVal dateMask As
         Optional PlaceholderPartial As String = vbNullString, _
         Optional PlaceholderComplete As String = vbNullString, _
         Optional PlaceholderInvalid As String = vbNullString, _
-        Optional PlaceHolderTemplete As String = "{holder}")
+        Optional PlaceHolderTemplate As String = "{holder}")
     Call AddField(inputTextBox:=inputTextBox, textMask:=dateMask, maskType:=enumTypeMask.tDateFix, _
             FormatValue:=dateFormat, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
             BorderColorInvalid:=BorderColorInvalid, minValue:=minDate, maxValue:=maxDate, showPlaceholder:=showPlaceholder, _
@@ -448,7 +469,7 @@ Public Sub AddFieldDate(ByRef inputTextBox As MSForms.TextBox, ByVal dateMask As
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
             PlaceholderInvalid:=PlaceholderInvalid, _
-            PlaceHolderTemplete:=PlaceHolderTemplete, _
+            PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
 ' #####################################################################################################################
@@ -486,7 +507,7 @@ Public Sub AddFieldTime(ByRef inputTextBox As MSForms.TextBox, ByVal timeMask As
         Optional PlaceholderPartial As String = vbNullString, _
         Optional PlaceholderComplete As String = vbNullString, _
         Optional PlaceholderInvalid As String = vbNullString, _
-        Optional PlaceHolderTemplete As String = "{holder}")
+        Optional PlaceHolderTemplate As String = "{holder}")
     Call AddField(inputTextBox:=inputTextBox, textMask:=timeMask, maskType:=enumTypeMask.tTimeFix, _
             FormatValue:=timeFormat, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
             BorderColorInvalid:=BorderColorInvalid, minValue:=0, maxValue:=1, showPlaceholder:=showPlaceholder, _
@@ -495,7 +516,7 @@ Public Sub AddFieldTime(ByRef inputTextBox As MSForms.TextBox, ByVal timeMask As
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
             PlaceholderInvalid:=PlaceholderInvalid, _
-            PlaceHolderTemplete:=PlaceHolderTemplete, _
+            PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
 ' #####################################################################################################################
@@ -527,7 +548,7 @@ Public Sub AddFieldText(ByRef inputTextBox As MSForms.TextBox, ByVal textMask As
         Optional PlaceholderPartial As String = vbNullString, _
         Optional PlaceholderComplete As String = vbNullString, _
         Optional PlaceholderInvalid As String = vbNullString, _
-        Optional PlaceHolderTemplete As String = "{holder}")
+        Optional PlaceHolderTemplate As String = "{holder}")
     Call AddField(inputTextBox:=inputTextBox, textMask:=textMask, maskType:=enumTypeMask.tOtherFix, _
             FormatValue:=vbNullString, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
             BorderColorInvalid:=BorderColorInvalid, minValue:=0, maxValue:=0, showPlaceholder:=showPlaceholder, _
@@ -536,7 +557,7 @@ Public Sub AddFieldText(ByRef inputTextBox As MSForms.TextBox, ByVal textMask As
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
             PlaceholderInvalid:=PlaceholderInvalid, _
-            PlaceHolderTemplete:=PlaceHolderTemplete, _
+            PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
 ' #####################################################################################################################
@@ -571,7 +592,7 @@ Public Sub AddFieldVariableLength(ByRef inputTextBox As MSForms.TextBox, _
         Optional PlaceholderPartial As String = vbNullString, _
         Optional PlaceholderComplete As String = vbNullString, _
         Optional PlaceholderInvalid As String = vbNullString, _
-        Optional PlaceHolderTemplete As String = "{holder}")
+        Optional PlaceHolderTemplate As String = "{holder}")
     Dim maskStr     As String
     If textMask <> vbNullString Then
         If VBA.Len(textMask) < maxLength Then
@@ -592,7 +613,7 @@ Public Sub AddFieldVariableLength(ByRef inputTextBox As MSForms.TextBox, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
             PlaceholderInvalid:=PlaceholderInvalid, _
-            PlaceHolderTemplete:=PlaceHolderTemplete, _
+            PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
 ' #####################################################################################################################
@@ -627,7 +648,7 @@ Public Sub AddFieldRegex(ByRef inputTextBox As MSForms.TextBox, _
         Optional PlaceholderPartial As String = vbNullString, _
         Optional PlaceholderComplete As String = vbNullString, _
         Optional PlaceholderInvalid As String = vbNullString, _
-        Optional PlaceHolderTemplete As String = "{holder}")
+        Optional PlaceHolderTemplate As String = "{holder}")
     Call AddField(inputTextBox:=inputTextBox, textMask:=vbNullString, maskType:=enumTypeMask.tRegex, _
             FormatValue:=vbNullString, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
             BorderColorInvalid:=BorderColorInvalid, minValue:=0, maxValue:=0, showPlaceholder:=showPlaceholder, _
@@ -636,7 +657,7 @@ Public Sub AddFieldRegex(ByRef inputTextBox As MSForms.TextBox, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
             PlaceholderInvalid:=PlaceholderInvalid, _
-            PlaceHolderTemplete:=PlaceHolderTemplete, _
+            PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=RegexFilter)
 End Sub
 
@@ -656,7 +677,7 @@ Private Sub AddField(ByRef inputTextBox As MSForms.TextBox, _
         ByVal PlaceholderPartial As String, _
         ByVal PlaceholderComplete As String, _
         ByVal PlaceholderInvalid As String, _
-        ByVal PlaceHolderTemplete As String, _
+        ByVal PlaceHolderTemplate As String, _
         ByVal RegexPattern As String, _
         ByVal RegexFilter As String)
 
@@ -710,7 +731,7 @@ Private Sub AddField(ByRef inputTextBox As MSForms.TextBox, _
         .BorderColorValid = IIf(BorderColorValid = 0, Me.BorderColorValid, BorderColorValid)
         .BorderColorInvalid = IIf(BorderColorInvalid = 0, Me.BorderColorInvalid, BorderColorInvalid)
 
-        .IsDecemal = allowDecimal
+        .IsDecimal = allowDecimal
         .IsNegative = allowNegative
 
         .Max = maxValue
@@ -727,7 +748,7 @@ Private Sub AddField(ByRef inputTextBox As MSForms.TextBox, _
         .PlaceholderPartial = PlaceholderPartial
         .PlaceholderComplete = PlaceholderComplete
         .PlaceholderInvalid = PlaceholderInvalid
-        .PlaceHolderTemplete = PlaceHolderTemplete
+        .PlaceHolderTemplate = PlaceHolderTemplate
 
         ' Set placeholder color
         .LabelPlaceholder.ForeColor = IIf(PlaceholderColor = 0, Me.PlaceholderColor, PlaceholderColor)
@@ -820,6 +841,18 @@ Private Sub mTextBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
     End Select
 End Sub
 
+' #####################################################################################################################
+' Procedure: KeyAsciiFixLenText
+' #####################################################################################################################
+' Purpose:
+'   Handles key press events for fixed length textboxes with input masks
+'   Validates input character against the mask at the current position
+'   Automatically appends fixed characters from the mask when appropriate
+'
+' Parameters:
+'   KeyAscii - ASCII code of the pressed key (modified by reference)
+' #####################################################################################################################
+
 Private Sub KeyAsciiFixLenText(ByRef KeyAscii As MSForms.ReturnInteger)
     On Error GoTo ErrorHandler
 
@@ -847,9 +880,9 @@ Private Sub KeyAsciiFixLenText(ByRef KeyAscii As MSForms.ReturnInteger)
                 Call LatinLetters(KeyAscii)
             Case "A"
                 Call AlphaNumeric(KeyAscii)
-            Case VBA.ChrW$(1041)
+            Case VBA.ChrW$(1041) ' Cyrillic letters
                 Call UniCodeLetters(KeyAscii)
-            Case VBA.ChrW$(1073)
+            Case VBA.ChrW$(1073) ' Cyrillic letters and digits
                 Call UniCodeLettersNumeric(KeyAscii)
             Case "*"
                 ' Allow any character
@@ -879,13 +912,13 @@ Private Sub NumericValue(ByRef KeyAscii As MSForms.ReturnInteger)
                 KeyAscii = 0
             End If
         Case 44:
-            If Me.IsDecemal Then
+            If Me.IsDecimal Then
                 KeyAscii = IIf(InStr(1, Me.Value, ",") > 0, 0, 44)
             Else
                 KeyAscii = 0
             End If
         Case 46:
-            If Me.IsDecemal Then
+            If Me.IsDecimal Then
                 KeyAscii = IIf(InStr(1, Me.Value, ",") > 0, 0, 44)
             Else
                 KeyAscii = 0
@@ -1149,7 +1182,7 @@ End Function
 
 Private Function processPlaceholderTemplate() As String
     Dim result      As String
-    result = Me.PlaceHolderTemplete
+    result = Me.PlaceHolderTemplate
     If result = vbNullString Then Exit Function
 
     ' Replace markers with actual values

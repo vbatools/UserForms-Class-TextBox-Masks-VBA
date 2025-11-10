@@ -29,7 +29,7 @@ Private Sub chbDec_Change()
     Dim item        As clsTextboxMask
     Set item = clsTB.GetItemByName(txtNumeric.Name)
     If item Is Nothing Then Exit Sub
-    item.IsDecemal = chbDec.Value
+    item.IsDecimal = chbDec.Value
 End Sub
 
 Private Sub chbMinus_Change()

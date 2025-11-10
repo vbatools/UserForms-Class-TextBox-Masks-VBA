@@ -62,7 +62,11 @@
 
 ```vba
 Dim numField As New clsTextboxMask
-Call numField.AddFieldNumeric(Me.TextBox1, 0, 100, True, False)
+Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
+                             minValue:=0, _
+                             maxValue:=100, _
+                             allowDecimal:=True, _
+                             allowNegative:=False)
 ```
 
 **Параметры:**
@@ -87,7 +91,11 @@ Call numField.AddFieldNumeric(Me.TextBox1, 0, 100, True, False)
 
 ```vba
 Dim dateField As New clsTextboxMask
-Call dateField.AddFieldDate(Me.TextBox2, "ddmmyy", #1/1/2020#, #12/31/2030#, "dd.mm.yyyy")
+Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
+                           dateMask:="##.##.####", _
+                           minDate:=#1/1/2020#, _
+                           maxDate:=#12/31/2030#, _
+                           dateFormat:="dd.mm.yyyy")
 ```
 
 **Параметры:**
@@ -111,7 +119,11 @@ Call dateField.AddFieldDate(Me.TextBox2, "ddmmyy", #1/1/2020#, #12/31/2030#, "dd
 
 ```vba
 Dim timeField As New clsTextboxMask
-Call timeField.AddFieldTime(Me.TextBox3, "hhmm", #0:00:00#, #23:59#, "hh:mm")
+Call timeField.AddFieldTime(inputTextBox:=Me.TextBox3, _
+                           timeMask:="##:##", _
+                           minTime:=#0:00:00#, _
+                           maxTime:=#23:59#, _
+                           timeFormat:="hh:mm")
 ```
 
 **Параметры:**
@@ -135,7 +147,8 @@ Call timeField.AddFieldTime(Me.TextBox3, "hhmm", #0:00:00#, #23:59#, "hh:mm")
 
 ```vba
 Dim textField As New clsTextboxMask
-Call textField.AddFieldText(Me.TextBox4, "AAA-99")  ' Буквы-цифры
+Call textField.AddFieldText(inputTextBox:=Me.TextBox4, _
+                           textMask:="+7(*##) @# A# #Б#")  ' Буквы-цифры
 ```
 
 **Параметры:**
@@ -156,7 +169,9 @@ Call textField.AddFieldText(Me.TextBox4, "AAA-99")  ' Буквы-цифры
 
 ```vba
 Dim varField As New clsTextboxMask
-Call varField.AddFieldVariableLength(Me.TextBox5, 50, "Текст")
+Call varField.AddFieldVariableLength(inputTextBox:=Me.TextBox5, _
+                                    maxLength:=10, _
+                                    textMask:="##")
 ```
 
 **Параметры:**
@@ -178,7 +193,9 @@ Call varField.AddFieldVariableLength(Me.TextBox5, 50, "Текст")
 
 ```vba
 Dim regexField As New clsTextboxMask
-Call regexField.AddFieldRegex(Me.TextBox6, "^[A-Z]{2}\d{4}$", "[A-Z0-9]")
+Call regexField.AddFieldRegex(inputTextBox:=Me.TextBox6, _
+                             RegexPattern:="^[A-Z]{2}\d{4}$", _
+                             RegexFilter:="[A-Z0-9]")
 ```
 
 **Параметры:**
@@ -239,26 +256,34 @@ myField.RemoveItem()
 | `Б` | Кирилические буквы |
 | `б` | Кириллические буквы и цифры |
 | `*` | Любые символы |
-| `[любой символ]` | Фиксированный символ (например, `-`, `(`, `)`, `/`, и т.д.) |
 
 ## Примеры использования
 
 ### 1. Числовое поле с ограничениями:
 ```vba
 Dim numField As New clsTextboxMask
-Call numField.AddFieldNumeric(Me.TextBox1, 0, 100, True, False)
+Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
+                             minValue:=0, _
+                             maxValue:=100, _
+                             allowDecimal:=True, _
+                             allowNegative:=False)
 ```
 
 ### 2. Поле даты:
 ```vba
 Dim dateField As New clsTextboxMask
-Call dateField.AddFieldDate(Me.TextBox2, "ddmmyy", #1/1/2020#, #12/31/2030#, "dd.mm.yyyy")
+Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
+                           dateMask:="##.##.####", _
+                           minDate:=#1/1/2020#, _
+                           maxDate:=#12/31/2030#, _
+                           dateFormat:="dd.mm.yyyy")
 ```
 
 ### 3. Текстовое поле с маской:
 ```vba
 Dim textField As New clsTextboxMask
-Call textField.AddFieldText(Me.TextBox3, "AAA-99")  ' Буквы-цифры
+Call textField.AddFieldText(inputTextBox:=Me.TextBox3, _
+                           textMask:="+7(*##) @# A# #Б#")  ' Буквы-цифры
 ```
 
 ## Зависимости
