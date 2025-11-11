@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmTestClass 
    Caption         =   "Test class:"
-   ClientHeight    =   7245
+   ClientHeight    =   7545
    ClientLeft      =   120
    ClientTop       =   465
    ClientWidth     =   16830
@@ -13,8 +13,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
-
 '* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 '* Module     : UserForm1
 '* Created    : 07-11-2025 10:06
@@ -32,12 +30,6 @@ Private Sub chbDec_Change()
     item.IsDecimal = chbDec.Value
 End Sub
 
-Private Sub chbMinus_Change()
-    Dim item        As clsTextboxMask
-    Set item = clsTB.GetItemByName(txtNumeric.Name)
-    If item Is Nothing Then Exit Sub
-    item.IsNegative = chbMinus.Value
-End Sub
 
 Private Sub chbVisible_Click()
     Dim item        As clsTextboxMask
@@ -108,27 +100,34 @@ Private Sub UserForm_Initialize()
 
     With clsTB
         Call .AddFieldDate(txtDate, "##.##.####", dt, VBA.Date, "dd.mm.yyyy")
-        Call .AddFieldText(txtPhone, "+7(###) ### ## ##")
-        Call .AddFieldText(txtOther, "+7(*##) @# A# #Á#", True, rgbGreen, rgbRed, rgbViolet)
         Call .AddFieldTime(txtTime, "##:##", 0, 1)
 
-        Call .AddFieldNumeric(txtNumeric, 0, 100, False, False)
+        Call .AddFieldText(txtPhone, "+7(###) ### ## ##")
+        Call .AddFieldText(txtOther, "+7(*##) @# A# #Á#", True, rgbGreen, rgbRed)
 
-        Call .AddFieldRegex(txtRegex, "\w+@\w+\.\w+", "[\w\-\.@]")
+        Call .AddFieldNumeric(txtNumeric, -100, 100, False)
+        With clsTB.GetItemByName(txtNumeric.Name)
+            lbMin.Caption = lbMin.Caption & .Min
+            lbMax.Caption = lbMax.Caption & .Max
+        End With
+
+        Call .AddFieldRegex(txtRegex, "\w+@\w+\.\w+", "[\w\-\.@]", True, , , , , , , , , , , "Reg Patern: {RegexPattern}")
 
         With clsTB.GetItemByName(txtRegex.Name)
-            lbPatern.Caption = lbPatern.Caption & .RegexPattern
             lbFulterChrs.Caption = lbFulterChrs.Caption & .RegexFilter
         End With
 
         Call .AddFieldVariableLength(txtVariableLen, 10, "##")
 
-        Call .AddFieldText(txtPhoneHolder, "+7(###) ### ## ##", True, , , , "Empty", "Partial", "Complete", "Invalid")
-        Call .AddFieldVariableLength(txtVariableLenHolder, 10, "##", True, , , , "Empty", "Partial", "Complete", "Invalid")
+        Call .AddFieldText(txtPhoneHolder, "+7(###) ### ## ##", True, , , , "Empty", rgbMaroon, "Partial", rgbOrange, "Complete", rgbBlueViolet, "Invalid")
+        Call .AddFieldVariableLength(txtVariableLenHolder, 10, "##", True, , , , "Empty", , "Partial", , "Complete", , "Invalid")
 
-        Call .AddFieldVariableLength(txtVariableLenHolder2, 10, "##", True, , , , "", "", "", "", "mask: {holder} rem: {percent}")
-        
+        Call .AddFieldVariableLength(txtVariableLenHolder2, 10, "##", True, , , , _
+                vbNullString, , vbNullString, , vbNullString, , vbNullString, "holder: {holder} pr: {percent}")
+
         lbCount.Caption = lbCount.Caption & .Count
         lbVersion.Caption = .Version
     End With
 End Sub
+
+

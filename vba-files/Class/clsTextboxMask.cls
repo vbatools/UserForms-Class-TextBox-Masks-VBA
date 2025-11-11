@@ -9,14 +9,14 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-' #####################################################################################################################
+'========================================================================================
 ' Class: clsTextboxMask
 ' Author: VBATools
-' Version: 1.0.6
+' Version: 1.0.7
 ' Creation Date: 05.11.2025 10:30
-' Last Update Date: 10.11.2025 19:57
+' Last Update Date: 11.11.2025 15:57
 ' License: Apache License
-' #####################################################################################################################
+'========================================================================================
 ' Purpose:
 '   Class for creating textbox fields with input masks in VBA. Provides input validation, placeholder display
 '   and visual indication of field fill status. Supports various mask types: numeric, letters, dates,
@@ -30,35 +30,36 @@ Option Explicit
 '   - Support for numeric values with range, sign and decimal restrictions
 '   - Support for variable length text
 '   - Support for validation via regular expressions
+'   - Support for placeholder color customization based on field status
+'   - Support for placeholder templates with markers: {mask}, {filled}, {remaining}, {holder}, {RegexPattern}, {RegexFilter}, {percent}
 '
 ' Usage Examples:
 '   1. Creating a numeric field with constraints:
 '      Dim numField As New clsTextboxMask
 '      Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
-'                                   minValue:=0, _
-'                                   maxValue:=100, _
-'                                   allowDecimal:=True, _
-'                                   allowNegative:=False)
+       '                                   minValue:=0, _
+       '                                   maxValue:=100, _
+       '                                   allowDecimal:=True)
 '
 '   2. Creating a date field:
 '      Dim dateField As New clsTextboxMask
 '      Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
-'                                 dateMask:="##.##.####", _
-'                                 minDate:=#1/1/2020#, _
-'                                 maxDate:=#12/31/2030#, _
-'                                 dateFormat:="dd.mm.yyyy")
+       '                                 dateMask:="##.##.####", _
+       '                                 minDate:=#1/1/2020#, _
+       '                                 maxDate:=#12/31/2030#, _
+       '                                 dateFormat:="dd.mm.yyyy")
 '
 '   3. Creating a text field with mask:
 '      Dim textField As New clsTextboxMask
 '      Call textField.AddFieldText(inputTextBox:=Me.TextBox3, _
-'                                 textMask:="+7(*##) @# A# #Б#")  ' Letters-digits
+       '                                 textMask:="+7(*##) @# A# #Б#")  ' Letters-digits
 '
 ' Dependencies:
 '   - MSForms.TextBox
 '   - MSForms.Label
 '   - VBScript.RegExp (for validation via regular expressions)
 '
-' #####################################################################################################################
+'========================================================================================
 
 Public Enum enumTypeMask
     tOtherFix = 1
@@ -74,7 +75,6 @@ End Enum
 Private mSimvolsMasks As String
 Private mBorderColorValid As Long
 Private mBorderColorInvalid As Long
-Private mPlaceholderColor As Long
 
 Private WithEvents mTextBox As MSForms.TextBox
 Attribute mTextBox.VB_VarHelpID = -1
@@ -95,8 +95,12 @@ Private mPlaceholderComplete As String      ' Placeholder text when field is com
 Private mPlaceholderInvalid As String       ' Placeholder text when field contains invalid data
 Private mPlaceholderTemplate As String      ' Example text for placeholders
 
+Private mPlaceholderEmptyColor As Long      ' Color for empty placeholder
+Private mPlaceholderPartialColor As Long    ' Color for partial placeholder
+Private mPlaceholderCompleteColor As Long   ' Color for complete placeholder
+Private mPlaceholderInvalidColor As Long    ' Color for invalid placeholder
+
 Private mIsDecimal  As Boolean
-Private mIsNegative As Boolean
 
 Private mMin        As Single
 Private mMax        As Single
@@ -107,9 +111,9 @@ Public Property Get ConstSimvolsMasks() As String
     ConstSimvolsMasks = mSimvolsMasks
 End Property
 
-' #####################################################################################################################
+'========================================================================================
 ' Property: PlaceholderMask
-' #####################################################################################################################
+'========================================================================================
 ' Purpose:
 '   Returns the current placeholder mask, which shows the remaining characters that need to be filled in the textbox
 '   If the textbox value is shorter than the mask length, the placeholder will show the remaining mask characters
@@ -117,13 +121,22 @@ End Property
 '
 ' Return Value:
 '   String - The placeholder mask showing remaining characters to be filled
-' #####################################################################################################################
+'========================================================================================
 Public Property Get PlaceholderMask() As String
     If Me.TextBox Is Nothing Then Exit Property
-    If Me.LenMask >= Me.LenValue Then
-        PlaceholderMask = Me.Value & VBA.Mid$(Me.Mask, Me.LenValue + 1, Me.LenMask - Me.LenValue)
+
+    Dim LenValue    As Integer
+    Dim lenMask     As Integer
+    Dim sMask       As String
+
+    LenValue = Me.LenValue
+    lenMask = Me.lenMask
+    sMask = Me.Mask
+
+    If lenMask >= LenValue Then
+        PlaceholderMask = Me.Value & VBA.Mid$(sMask, LenValue + 1, lenMask - LenValue)
     Else
-        PlaceholderMask = Me.Mask
+        PlaceholderMask = sMask
     End If
 End Property
 
@@ -133,7 +146,6 @@ End Property
 
 Public Property Let PlaceholderEmpty(ByVal Value As String)
     mPlaceholderEmpty = Value
-    'Call UpdatePlaceholder
 End Property
 
 Public Property Get PlaceholderPartial() As String
@@ -142,7 +154,6 @@ End Property
 
 Public Property Let PlaceholderPartial(ByVal Value As String)
     mPlaceholderPartial = Value
-    'Call UpdatePlaceholder
 End Property
 
 Public Property Get PlaceholderComplete() As String
@@ -151,7 +162,6 @@ End Property
 
 Public Property Let PlaceholderComplete(ByVal Value As String)
     mPlaceholderComplete = Value
-    'Call UpdatePlaceholder
 End Property
 
 Public Property Get PlaceholderInvalid() As String
@@ -160,7 +170,6 @@ End Property
 
 Public Property Let PlaceholderInvalid(ByVal Value As String)
     mPlaceholderInvalid = Value
-    'Call UpdatePlaceholder
 End Property
 
 Public Property Get PlaceHolderTemplate() As String
@@ -169,7 +178,6 @@ End Property
 
 Public Property Let PlaceHolderTemplate(ByVal Value As String)
     mPlaceholderTemplate = Value
-    'Call UpdatePlaceholder
 End Property
 
 Public Property Get VisibleLabelPlaceholder() As Boolean
@@ -182,12 +190,36 @@ Public Property Let VisibleLabelPlaceholder(ByVal Value As Boolean)
     Me.LabelPlaceholder.Visible = Value
 End Property
 
-Public Property Get PlaceholderColor() As Long
-    PlaceholderColor = mPlaceholderColor
+Public Property Get PlaceholderEmptyColor() As Long
+    PlaceholderEmptyColor = mPlaceholderEmptyColor
 End Property
 
-Public Property Let PlaceholderColor(ByVal Value As Long)
-    mPlaceholderColor = Value
+Public Property Let PlaceholderEmptyColor(ByVal Value As Long)
+    mPlaceholderEmptyColor = Value
+End Property
+
+Public Property Get PlaceholderPartialColor() As Long
+    PlaceholderPartialColor = mPlaceholderPartialColor
+End Property
+
+Public Property Let PlaceholderPartialColor(ByVal Value As Long)
+    mPlaceholderPartialColor = Value
+End Property
+
+Public Property Get PlaceholderCompleteColor() As Long
+    PlaceholderCompleteColor = mPlaceholderCompleteColor
+End Property
+
+Public Property Let PlaceholderCompleteColor(ByVal Value As Long)
+    mPlaceholderCompleteColor = Value
+End Property
+
+Public Property Get PlaceholderInvalidColor() As Long
+    PlaceholderInvalidColor = mPlaceholderInvalidColor
+End Property
+
+Public Property Let PlaceholderInvalidColor(ByVal Value As Long)
+    mPlaceholderInvalidColor = Value
 End Property
 
 Public Property Let BorderColorValid(ByRef Color As Long)
@@ -220,14 +252,6 @@ End Property
 
 Public Property Let Max(ByVal Value As Single)
     mMax = Value
-End Property
-
-Public Property Get IsNegative() As Boolean
-    IsNegative = mIsNegative
-End Property
-
-Public Property Let IsNegative(ByVal Value As Boolean)
-    mIsNegative = Value
 End Property
 
 Public Property Get IsDecimal() As Boolean
@@ -293,8 +317,8 @@ Public Property Get Mask() As String
     Mask = mMask
 End Property
 
-Public Property Get LenMask() As Integer
-    LenMask = VBA.Len(Me.Mask)
+Public Property Get lenMask() As Integer
+    lenMask = VBA.Len(Me.Mask)
 End Property
 
 Public Property Let FormatValue(ByRef FormatValue As String)
@@ -329,10 +353,10 @@ End Property
 
 Public Property Get RemainingChars() As Integer
     If Me.TextBox Is Nothing Then
-        RemainingChars = Me.LenMask
+        RemainingChars = Me.lenMask
         Exit Property
     End If
-    RemainingChars = Me.LenMask - Me.LenValue
+    RemainingChars = Me.lenMask - Me.LenValue
 End Property
 
 Public Property Get GetItemByIndex(ByVal index As Integer) As clsTextboxMask
@@ -344,7 +368,7 @@ endGetItem:
     Select Case Err.Number
         Case 0, 5
         Case Else
-            Debug.Print "Error in getItemByName: " & Err.Description & " (Number: " & Err.Number & ")"
+            Call Err.Raise(vbObjectError + 104, "clsTextboxMask Error in GetItemByIndex: ", "Number: " & Err.Number & " " & Err.Description)
             Set GetItemByIndex = Nothing
     End Select
 End Property
@@ -358,7 +382,7 @@ endGetItem:
     Select Case Err.Number
         Case 0, 5
         Case Else
-            Debug.Print "Error in getItemByName: " & Err.Description & " (Number: " & Err.Number & ")"
+            Call Err.Raise(vbObjectError + 105, "clsTextboxMask Error in GetItemByName: ", "Number: " & Err.Number & " " & Err.Description)
             Set GetItemByName = Nothing
     End Select
 End Property
@@ -366,18 +390,19 @@ End Property
 Public Property Get Version() As String
     Version = "Class: clsTextboxMask" & vbNewLine & _
             "Author: VBATools" & vbNewLine & _
-            "Version: 1.0.6" & vbNewLine & _
+            "Version: 1.0.7" & vbNewLine & _
             "Date of creation: 05.11.2025 10:30" & vbNewLine & _
-            "Date of update: 10.11.2025 19:57" & vbNewLine & _
+            "Date of update: 11.11.2025 15:57" & vbNewLine & _
             "License: Apache" & vbNewLine & _
             "Description: Class for creating textboxes with input masks in VBA" & vbNewLine & _
             "Supports various mask types: digital, letters, dates, phone numbers, etc." & vbNewLine & _
             "Provides input validation, placeholder display, and visual indication" & vbNewLine & _
             "of field fill status."
 End Property
-' #####################################################################################################################
+
+' ========================================================================================
 ' Procedure: AddFieldNumeric
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Adds a numeric field with specified validation parameters
 '
@@ -386,38 +411,50 @@ End Property
 '   minValue - minimum allowed value
 '   maxValue - maximum allowed value
 '   allowDecimal - allow input of decimal values
-'   allowNegative - allow input of negative values
 '   showPlaceholder - show placeholder
 '   numberFormat - number display format
 '   BorderColorValid - border color for correct input
 '   BorderColorInvalid - border color for incorrect input
-'   PlaceholderColor - placeholder color
+'   PlaceholderEmptyColor  - placeholder color
 '   PlaceholderEmpty - placeholder text for empty field
 '   PlaceholderPartial - placeholder text for partially filled field
 '   PlaceholderComplete - placeholder text for completely filled field
 '   PlaceholderInvalid - placeholder text for field with invalid data
 '   PlaceHolderTemplete - placeholder template
-' #####################################################################################################################
-
+' ========================================================================================
 Public Sub AddFieldNumeric(ByRef inputTextBox As MSForms.TextBox, _
         ByVal minValue As Single, _
         ByVal maxValue As Single, _
         ByVal allowDecimal As Boolean, _
-        ByVal allowNegative As Boolean, _
         Optional showPlaceholder As Boolean = True, _
         Optional numberFormat As String = "#.0", _
         Optional BorderColorValid As XlRgbColor = 0, _
         Optional BorderColorInvalid As XlRgbColor = 0, _
-        Optional PlaceholderColor As XlRgbColor = 0, _
+        Optional PlaceholderEmptyColor As XlRgbColor = 0, _
         Optional PlaceholderEmpty As String = vbNullString, _
+        Optional PlaceholderPartialColor As XlRgbColor = 0, _
         Optional PlaceholderPartial As String = vbNullString, _
+        Optional PlaceholderCompleteColor As XlRgbColor = 0, _
         Optional PlaceholderComplete As String = vbNullString, _
+        Optional PlaceholderInvalidColor As XlRgbColor = 0, _
         Optional PlaceholderInvalid As String = vbNullString, _
         Optional PlaceHolderTemplate As String = "{holder}")
-    Call AddField(inputTextBox:=inputTextBox, textMask:=VBA.String$(WorksheetFunction.Max(VBA.Len(minValue), VBA.Len(maxValue)), "#"), _
-            maskType:=enumTypeMask.tNumeric, FormatValue:=numberFormat, allowDecimal:=allowDecimal, allowNegative:=allowNegative, _
-            BorderColorValid:=BorderColorValid, BorderColorInvalid:=BorderColorInvalid, minValue:=minValue, maxValue:=maxValue, _
-            showPlaceholder:=showPlaceholder, PlaceholderColor:=PlaceholderColor, RegexPattern:=vbNullString, _
+
+    Call AddField(inputTextBox:=inputTextBox, _
+            textMask:=VBA.String$(WorksheetFunction.Max(VBA.Len(minValue), VBA.Len(maxValue)), "#"), _
+            maskType:=enumTypeMask.tNumeric, _
+            FormatValue:=numberFormat, _
+            allowDecimal:=allowDecimal, _
+            BorderColorValid:=BorderColorValid, _
+            BorderColorInvalid:=BorderColorInvalid, _
+            minValue:=minValue, _
+            maxValue:=maxValue, _
+            showPlaceholder:=showPlaceholder, _
+            PlaceholderEmptyColor:=PlaceholderEmptyColor, _
+            PlaceholderPartialColor:=PlaceholderPartialColor, _
+            PlaceholderCompleteColor:=PlaceholderCompleteColor, _
+            PlaceholderInvalidColor:=PlaceholderInvalidColor, _
+            RegexPattern:=vbNullString, _
             PlaceholderEmpty:=PlaceholderEmpty, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
@@ -425,9 +462,10 @@ Public Sub AddFieldNumeric(ByRef inputTextBox As MSForms.TextBox, _
             PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
-' #####################################################################################################################
+
+' ========================================================================================
 ' Procedure: AddFieldDate
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Adds a date input field with specified validation parameters
 '
@@ -440,14 +478,13 @@ End Sub
 '   showPlaceholder - show placeholder
 '   BorderColorValid - border color for correct input
 '   BorderColorInvalid - border color for incorrect input
-'   PlaceholderColor - placeholder color
+'   PlaceholderEmptyColor  - placeholder color
 '   PlaceholderEmpty - placeholder text for empty field
 '   PlaceholderPartial - placeholder text for partially filled field
 '   PlaceholderComplete - placeholder text for completely filled field
 '   PlaceholderInvalid - placeholder text for field with invalid data
 '   PlaceHolderTemplete - placeholder template
-' #####################################################################################################################
-
+' ========================================================================================
 Public Sub AddFieldDate(ByRef inputTextBox As MSForms.TextBox, ByVal dateMask As String, _
         ByVal minDate As Date, _
         ByVal maxDate As Date, _
@@ -455,16 +492,31 @@ Public Sub AddFieldDate(ByRef inputTextBox As MSForms.TextBox, ByVal dateMask As
         Optional showPlaceholder As Boolean = True, _
         Optional BorderColorValid As XlRgbColor = 0, _
         Optional BorderColorInvalid As XlRgbColor = 0, _
-        Optional PlaceholderColor As XlRgbColor = 0, _
+        Optional PlaceholderEmptyColor As XlRgbColor = 0, _
         Optional PlaceholderEmpty As String = vbNullString, _
+        Optional PlaceholderPartialColor As XlRgbColor = 0, _
         Optional PlaceholderPartial As String = vbNullString, _
+        Optional PlaceholderCompleteColor As XlRgbColor = 0, _
         Optional PlaceholderComplete As String = vbNullString, _
+        Optional PlaceholderInvalidColor As XlRgbColor = 0, _
         Optional PlaceholderInvalid As String = vbNullString, _
         Optional PlaceHolderTemplate As String = "{holder}")
-    Call AddField(inputTextBox:=inputTextBox, textMask:=dateMask, maskType:=enumTypeMask.tDateFix, _
-            FormatValue:=dateFormat, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
-            BorderColorInvalid:=BorderColorInvalid, minValue:=minDate, maxValue:=maxDate, showPlaceholder:=showPlaceholder, _
-            PlaceholderColor:=PlaceholderColor, RegexPattern:=vbNullString, _
+
+    Call AddField(inputTextBox:=inputTextBox, _
+            textMask:=dateMask, _
+            maskType:=enumTypeMask.tDateFix, _
+            FormatValue:=dateFormat, _
+            allowDecimal:=False, _
+            BorderColorValid:=BorderColorValid, _
+            BorderColorInvalid:=BorderColorInvalid, _
+            minValue:=minDate, _
+            maxValue:=maxDate, _
+            showPlaceholder:=showPlaceholder, _
+            PlaceholderEmptyColor:=PlaceholderEmptyColor, _
+            PlaceholderPartialColor:=PlaceholderPartialColor, _
+            PlaceholderCompleteColor:=PlaceholderCompleteColor, _
+            PlaceholderInvalidColor:=PlaceholderInvalidColor, _
+            RegexPattern:=vbNullString, _
             PlaceholderEmpty:=PlaceholderEmpty, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
@@ -472,9 +524,10 @@ Public Sub AddFieldDate(ByRef inputTextBox As MSForms.TextBox, ByVal dateMask As
             PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
-' #####################################################################################################################
+
+' ========================================================================================
 ' Procedure: AddFieldTime
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Adds a time input field with specified validation parameters
 '
@@ -487,14 +540,13 @@ End Sub
 '   showPlaceholder - show placeholder
 '   BorderColorValid - border color for correct input
 '   BorderColorInvalid - border color for incorrect input
-'   PlaceholderColor - placeholder color
+'   PlaceholderEmptyColor  - placeholder color
 '   PlaceholderEmpty - placeholder text for empty field
 '   PlaceholderPartial - placeholder text for partially filled field
 '   PlaceholderComplete - placeholder text for completely filled field
 '   PlaceholderInvalid - placeholder text for field with invalid data
 '   PlaceHolderTemplete - placeholder template
-' #####################################################################################################################
-
+' ========================================================================================
 Public Sub AddFieldTime(ByRef inputTextBox As MSForms.TextBox, ByVal timeMask As String, _
         ByVal minTime As Date, _
         ByVal maxTime As Date, _
@@ -502,16 +554,31 @@ Public Sub AddFieldTime(ByRef inputTextBox As MSForms.TextBox, ByVal timeMask As
         Optional showPlaceholder As Boolean = True, _
         Optional BorderColorValid As XlRgbColor = 0, _
         Optional BorderColorInvalid As XlRgbColor = 0, _
-        Optional PlaceholderColor As XlRgbColor = 0, _
+        Optional PlaceholderEmptyColor As XlRgbColor = 0, _
         Optional PlaceholderEmpty As String = vbNullString, _
+        Optional PlaceholderPartialColor As XlRgbColor = 0, _
         Optional PlaceholderPartial As String = vbNullString, _
+        Optional PlaceholderCompleteColor As XlRgbColor = 0, _
         Optional PlaceholderComplete As String = vbNullString, _
+        Optional PlaceholderInvalidColor As XlRgbColor = 0, _
         Optional PlaceholderInvalid As String = vbNullString, _
         Optional PlaceHolderTemplate As String = "{holder}")
-    Call AddField(inputTextBox:=inputTextBox, textMask:=timeMask, maskType:=enumTypeMask.tTimeFix, _
-            FormatValue:=timeFormat, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
-            BorderColorInvalid:=BorderColorInvalid, minValue:=0, maxValue:=1, showPlaceholder:=showPlaceholder, _
-            PlaceholderColor:=PlaceholderColor, RegexPattern:=vbNullString, _
+
+    Call AddField(inputTextBox:=inputTextBox, _
+            textMask:=timeMask, _
+            maskType:=enumTypeMask.tTimeFix, _
+            FormatValue:=timeFormat, _
+            allowDecimal:=False, _
+            BorderColorValid:=BorderColorValid, _
+            BorderColorInvalid:=BorderColorInvalid, _
+            minValue:=0, _
+            maxValue:=1, _
+            showPlaceholder:=showPlaceholder, _
+            PlaceholderEmptyColor:=PlaceholderEmptyColor, _
+            PlaceholderPartialColor:=PlaceholderPartialColor, _
+            PlaceholderCompleteColor:=PlaceholderCompleteColor, _
+            PlaceholderInvalidColor:=PlaceholderInvalidColor, _
+            RegexPattern:=vbNullString, _
             PlaceholderEmpty:=PlaceholderEmpty, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
@@ -519,9 +586,10 @@ Public Sub AddFieldTime(ByRef inputTextBox As MSForms.TextBox, ByVal timeMask As
             PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
-' #####################################################################################################################
+
+' ========================================================================================
 ' Procedure: AddFieldText
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Adds a text field with specified input mask
 '
@@ -531,28 +599,43 @@ End Sub
 '   showPlaceholder - show placeholder
 '   BorderColorValid - border color for correct input
 '   BorderColorInvalid - border color for incorrect input
-'   PlaceholderColor - placeholder color
+'   PlaceholderEmptyColor  - placeholder color
 '   PlaceholderEmpty - placeholder text for empty field
 '   PlaceholderPartial - placeholder text for partially filled field
 '   PlaceholderComplete - placeholder text for completely filled field
 '   PlaceholderInvalid - placeholder text for field with invalid data
 '   PlaceHolderTemplete - placeholder template
-' #####################################################################################################################
-
-Public Sub AddFieldText(ByRef inputTextBox As MSForms.TextBox, ByVal textMask As String, _
+' ========================================================================================
+Public Sub AddFieldText(ByRef inputTextBox As MSForms.TextBox, _
+        ByVal textMask As String, _
         Optional showPlaceholder As Boolean = True, _
         Optional BorderColorValid As XlRgbColor = 0, _
         Optional BorderColorInvalid As XlRgbColor = 0, _
-        Optional PlaceholderColor As XlRgbColor = 0, _
+        Optional PlaceholderEmptyColor As XlRgbColor = 0, _
         Optional PlaceholderEmpty As String = vbNullString, _
+        Optional PlaceholderPartialColor As XlRgbColor = 0, _
         Optional PlaceholderPartial As String = vbNullString, _
+        Optional PlaceholderCompleteColor As XlRgbColor = 0, _
         Optional PlaceholderComplete As String = vbNullString, _
+        Optional PlaceholderInvalidColor As XlRgbColor = 0, _
         Optional PlaceholderInvalid As String = vbNullString, _
         Optional PlaceHolderTemplate As String = "{holder}")
-    Call AddField(inputTextBox:=inputTextBox, textMask:=textMask, maskType:=enumTypeMask.tOtherFix, _
-            FormatValue:=vbNullString, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
-            BorderColorInvalid:=BorderColorInvalid, minValue:=0, maxValue:=0, showPlaceholder:=showPlaceholder, _
-            PlaceholderColor:=PlaceholderColor, RegexPattern:=vbNullString, _
+
+    Call AddField(inputTextBox:=inputTextBox, _
+            textMask:=textMask, _
+            maskType:=enumTypeMask.tOtherFix, _
+            FormatValue:=vbNullString, _
+            allowDecimal:=False, _
+            BorderColorValid:=BorderColorValid, _
+            BorderColorInvalid:=BorderColorInvalid, _
+            minValue:=0, _
+            maxValue:=0, _
+            showPlaceholder:=showPlaceholder, _
+            PlaceholderEmptyColor:=PlaceholderEmptyColor, _
+            PlaceholderPartialColor:=PlaceholderPartialColor, _
+            PlaceholderCompleteColor:=PlaceholderCompleteColor, _
+            PlaceholderInvalidColor:=PlaceholderInvalidColor, _
+            RegexPattern:=vbNullString, _
             PlaceholderEmpty:=PlaceholderEmpty, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
@@ -560,9 +643,10 @@ Public Sub AddFieldText(ByRef inputTextBox As MSForms.TextBox, ByVal textMask As
             PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
-' #####################################################################################################################
+
+' ========================================================================================
 ' Procedure: AddFieldVariableLength
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Adds a field with variable text length
 '
@@ -573,24 +657,26 @@ End Sub
 '   showPlaceholder - show placeholder
 '   BorderColorValid - border color for correct input
 '   BorderColorInvalid - border color for incorrect input
-'   PlaceholderColor - placeholder color
+'   PlaceholderEmptyColor  - placeholder color
 '   PlaceholderEmpty - placeholder text for empty field
 '   PlaceholderPartial - placeholder text for partially filled field
 '   PlaceholderComplete - placeholder text for completely filled field
 '   PlaceholderInvalid - placeholder text for field with invalid data
 '   PlaceHolderTemplete - placeholder template
-' #####################################################################################################################
-
+' ========================================================================================
 Public Sub AddFieldVariableLength(ByRef inputTextBox As MSForms.TextBox, _
         ByVal maxLength As Integer, _
         Optional textMask As String = vbNullString, _
         Optional showPlaceholder As Boolean = True, _
         Optional BorderColorValid As XlRgbColor = 0, _
         Optional BorderColorInvalid As XlRgbColor = 0, _
-        Optional PlaceholderColor As XlRgbColor = 0, _
+        Optional PlaceholderEmptyColor As XlRgbColor = 0, _
         Optional PlaceholderEmpty As String = vbNullString, _
+        Optional PlaceholderPartialColor As XlRgbColor = 0, _
         Optional PlaceholderPartial As String = vbNullString, _
+        Optional PlaceholderCompleteColor As XlRgbColor = 0, _
         Optional PlaceholderComplete As String = vbNullString, _
+        Optional PlaceholderInvalidColor As XlRgbColor = 0, _
         Optional PlaceholderInvalid As String = vbNullString, _
         Optional PlaceHolderTemplate As String = "{holder}")
     Dim maskStr     As String
@@ -605,10 +691,21 @@ Public Sub AddFieldVariableLength(ByRef inputTextBox As MSForms.TextBox, _
         maskStr = VBA.String$(maxLength, "*")
     End If
 
-    Call AddField(inputTextBox:=inputTextBox, textMask:=maskStr, maskType:=enumTypeMask.tVariableLen, _
-            FormatValue:=vbNullString, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
-            BorderColorInvalid:=BorderColorInvalid, minValue:=0, maxValue:=maxLength, showPlaceholder:=showPlaceholder, _
-            PlaceholderColor:=PlaceholderColor, RegexPattern:=vbNullString, _
+    Call AddField(inputTextBox:=inputTextBox, _
+            textMask:=maskStr, _
+            maskType:=enumTypeMask.tVariableLen, _
+            FormatValue:=vbNullString, _
+            allowDecimal:=False, _
+            BorderColorValid:=BorderColorValid, _
+            BorderColorInvalid:=BorderColorInvalid, _
+            minValue:=0, _
+            maxValue:=maxLength, _
+            showPlaceholder:=showPlaceholder, _
+            PlaceholderEmptyColor:=PlaceholderEmptyColor, _
+            PlaceholderPartialColor:=PlaceholderPartialColor, _
+            PlaceholderCompleteColor:=PlaceholderCompleteColor, _
+            PlaceholderInvalidColor:=PlaceholderInvalidColor, _
+            RegexPattern:=vbNullString, _
             PlaceholderEmpty:=PlaceholderEmpty, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
@@ -616,9 +713,10 @@ Public Sub AddFieldVariableLength(ByRef inputTextBox As MSForms.TextBox, _
             PlaceHolderTemplate:=PlaceHolderTemplate, _
             RegexFilter:=vbNullString)
 End Sub
-' #####################################################################################################################
+
+' ========================================================================================
 ' Procedure: AddFieldRegex
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Adds a field with validation via regular expression
 '
@@ -629,30 +727,44 @@ End Sub
 '   showPlaceholder - show placeholder
 '   BorderColorValid - border color for correct input
 '   BorderColorInvalid - border color for incorrect input
-'   PlaceholderColor - placeholder color
+'   PlaceholderEmptyColor  - placeholder color
 '   PlaceholderEmpty - placeholder text for empty field
 '   PlaceholderPartial - placeholder text for partially filled field
 '   PlaceholderComplete - placeholder text for completely filled field
 '   PlaceholderInvalid - placeholder text for field with invalid data
 '   PlaceHolderTemplete - placeholder template
-' #####################################################################################################################
-
+' ========================================================================================
 Public Sub AddFieldRegex(ByRef inputTextBox As MSForms.TextBox, _
         ByVal RegexPattern As String, _
         ByVal RegexFilter As String, _
         Optional showPlaceholder As Boolean = True, _
         Optional BorderColorValid As XlRgbColor = 0, _
         Optional BorderColorInvalid As XlRgbColor = 0, _
-        Optional PlaceholderColor As XlRgbColor = 0, _
+        Optional PlaceholderEmptyColor As XlRgbColor = 0, _
         Optional PlaceholderEmpty As String = vbNullString, _
+        Optional PlaceholderPartialColor As XlRgbColor = 0, _
         Optional PlaceholderPartial As String = vbNullString, _
+        Optional PlaceholderCompleteColor As XlRgbColor = 0, _
         Optional PlaceholderComplete As String = vbNullString, _
+        Optional PlaceholderInvalidColor As XlRgbColor = 0, _
         Optional PlaceholderInvalid As String = vbNullString, _
         Optional PlaceHolderTemplate As String = "{holder}")
-    Call AddField(inputTextBox:=inputTextBox, textMask:=vbNullString, maskType:=enumTypeMask.tRegex, _
-            FormatValue:=vbNullString, allowDecimal:=False, allowNegative:=False, BorderColorValid:=BorderColorValid, _
-            BorderColorInvalid:=BorderColorInvalid, minValue:=0, maxValue:=0, showPlaceholder:=showPlaceholder, _
-            PlaceholderColor:=PlaceholderColor, RegexPattern:=RegexPattern, _
+
+    Call AddField(inputTextBox:=inputTextBox, _
+            textMask:=vbNullString, _
+            maskType:=enumTypeMask.tRegex, _
+            FormatValue:=vbNullString, _
+            allowDecimal:=False, _
+            BorderColorValid:=BorderColorValid, _
+            BorderColorInvalid:=BorderColorInvalid, _
+            minValue:=0, _
+            maxValue:=0, _
+            showPlaceholder:=showPlaceholder, _
+            PlaceholderEmptyColor:=PlaceholderEmptyColor, _
+            PlaceholderPartialColor:=PlaceholderPartialColor, _
+            PlaceholderCompleteColor:=PlaceholderCompleteColor, _
+            PlaceholderInvalidColor:=PlaceholderInvalidColor, _
+            RegexPattern:=RegexPattern, _
             PlaceholderEmpty:=PlaceholderEmpty, _
             PlaceholderPartial:=PlaceholderPartial, _
             PlaceholderComplete:=PlaceholderComplete, _
@@ -666,33 +778,35 @@ Private Sub AddField(ByRef inputTextBox As MSForms.TextBox, _
         ByVal maskType As enumTypeMask, _
         ByVal FormatValue As String, _
         ByVal allowDecimal As Boolean, _
-        ByVal allowNegative As Boolean, _
         ByVal BorderColorValid As XlRgbColor, _
         ByVal BorderColorInvalid As XlRgbColor, _
         ByVal minValue As Single, _
         ByVal maxValue As Single, _
         ByVal showPlaceholder As Boolean, _
-        ByVal PlaceholderColor As XlRgbColor, _
+        ByVal PlaceholderEmptyColor As XlRgbColor, _
         ByVal PlaceholderEmpty As String, _
+        ByVal PlaceholderPartialColor As XlRgbColor, _
         ByVal PlaceholderPartial As String, _
+        ByVal PlaceholderCompleteColor As XlRgbColor, _
         ByVal PlaceholderComplete As String, _
+        ByVal PlaceholderInvalidColor As XlRgbColor, _
         ByVal PlaceholderInvalid As String, _
         ByVal PlaceHolderTemplate As String, _
         ByVal RegexPattern As String, _
         ByVal RegexFilter As String)
 
     If inputTextBox Is Nothing Then
-        Err.Raise vbObjectError + 101, "clsTextboxMask", "TextBox cannot be Nothing"
+        Call Err.Raise(vbObjectError + 101, "clsTextboxMask", "TextBox cannot be Nothing")
         Exit Sub
     End If
 
     If maskType < enumTypeMask.[_First] Or maskType > enumTypeMask.[_Last] Then
-        Err.Raise vbObjectError + 102, "clsTextboxMask", "Invalid mask type"
+        Call Err.Raise(vbObjectError + 102, "clsTextboxMask", "Invalid mask type")
         Exit Sub
     End If
 
     If IsControlInCollection(inputTextBox.Name) Then
-        Err.Raise vbObjectError + 103, "clsTextboxMask", "The item has already been created"
+        Call Err.Raise(vbObjectError + 103, "clsTextboxMask", "The item has already been created")
         Exit Sub
     End If
 
@@ -702,7 +816,7 @@ Private Sub AddField(ByRef inputTextBox As MSForms.TextBox, _
     With itemCls
         Set .TextBox = inputTextBox
         .Mask = textMask
-        If .LenMask > 0 Then .TextBox.maxLength = .LenMask
+        If .lenMask > 0 Then .TextBox.maxLength = .lenMask
 
         Dim labelName As String
         labelName = inputTextBox.Name & "_holder"
@@ -728,11 +842,18 @@ Private Sub AddField(ByRef inputTextBox As MSForms.TextBox, _
         End With
 
         ' Use default colors if 0 is passed as parameter
-        .BorderColorValid = IIf(BorderColorValid = 0, Me.BorderColorValid, BorderColorValid)
-        .BorderColorInvalid = IIf(BorderColorInvalid = 0, Me.BorderColorInvalid, BorderColorInvalid)
+        If BorderColorValid = 0 Then
+            .BorderColorValid = Me.BorderColorValid
+        Else
+            .BorderColorValid = BorderColorValid
+        End If
+        If BorderColorInvalid = 0 Then
+            .BorderColorInvalid = Me.BorderColorInvalid
+        Else
+            .BorderColorInvalid = BorderColorInvalid
+        End If
 
         .IsDecimal = allowDecimal
-        .IsNegative = allowNegative
 
         .Max = maxValue
         .Min = minValue
@@ -751,7 +872,11 @@ Private Sub AddField(ByRef inputTextBox As MSForms.TextBox, _
         .PlaceHolderTemplate = PlaceHolderTemplate
 
         ' Set placeholder color
-        .LabelPlaceholder.ForeColor = IIf(PlaceholderColor = 0, Me.PlaceholderColor, PlaceholderColor)
+        If PlaceholderInvalidColor <> 0 Then .PlaceholderInvalidColor = PlaceholderInvalidColor
+        If PlaceholderCompleteColor <> 0 Then .PlaceholderCompleteColor = PlaceholderCompleteColor
+        If PlaceholderPartialColor <> 0 Then .PlaceholderPartialColor = PlaceholderPartialColor
+        If PlaceholderEmptyColor <> 0 Then .PlaceholderEmptyColor = PlaceholderEmptyColor
+        .LabelPlaceholder.ForeColor = .PlaceholderEmptyColor
 
         .FormatValue = IIf(FormatValue = vbNullString, maskType, FormatValue)
 
@@ -762,48 +887,35 @@ Private Sub AddField(ByRef inputTextBox As MSForms.TextBox, _
         .UpdatePlaceholder
     End With
 End Sub
-' #####################################################################################################################
-' Function: IsValid
-' #####################################################################################################################
-' Purpose:
-'   Checks the correctness of data entered in the textbox field
-'
-' Return Value:
-'   Boolean - True if data is correct, otherwise False
-' #####################################################################################################################
+
+Private Function IsControlInCollection(ByVal controlName As String) As Boolean
+    Dim tempItem    As clsTextboxMask
+    On Error Resume Next
+    Set tempItem = GetItemByName(controlName)
+    On Error GoTo 0
+    If Not tempItem Is Nothing Then IsControlInCollection = True
+End Function
 
 Public Function IsValid() As Boolean
     IsValid = IsValidInput()
 End Function
-' #####################################################################################################################
-' Procedure: Clear
-' #####################################################################################################################
-' Purpose:
-'   Clears the textbox field
-' #####################################################################################################################
 
 Public Sub Clear()
     If Me.TextBox Is Nothing Then Exit Sub
     Me.Value = vbNullString
 End Sub
-' #####################################################################################################################
-' Procedure: SetFocus
-' #####################################################################################################################
-' Purpose:
-'   Sets focus on the textbox field
-' #####################################################################################################################
 
 Public Sub SetFocus()
     If Me.TextBox Is Nothing Then Exit Sub
     Me.TextBox.SetFocus
 End Sub
-' #####################################################################################################################
+
+' ========================================================================================
 ' Procedure: RemoveItem
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Removes the textbox mask element and related components
-' #####################################################################################################################
-
+' ========================================================================================
 Public Sub RemoveItem()
     On Error Resume Next
     If IsControlInCollection(Me.TextBox.Name) Then
@@ -811,7 +923,7 @@ Public Sub RemoveItem()
         Call Me.Items.Remove(Me.TextBox.Name)
     End If
     On Error GoTo 0
- 
+
     Set Me.LabelPlaceholder = Nothing
     Set Me.TextBox = Nothing
     Set Me.Items = Nothing
@@ -841,9 +953,9 @@ Private Sub mTextBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
     End Select
 End Sub
 
-' #####################################################################################################################
+' ========================================================================================
 ' Procedure: KeyAsciiFixLenText
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Handles key press events for fixed length textboxes with input masks
 '   Validates input character against the mask at the current position
@@ -851,28 +963,35 @@ End Sub
 '
 ' Parameters:
 '   KeyAscii - ASCII code of the pressed key (modified by reference)
-' #####################################################################################################################
-
+' ========================================================================================
 Private Sub KeyAsciiFixLenText(ByRef KeyAscii As MSForms.ReturnInteger)
     On Error GoTo ErrorHandler
 
-    If Me.TextBox Is Nothing Or Me.LenMask = 0 Then
+    Dim LenValue    As Integer
+    Dim lenMask     As Integer
+    Dim sMask       As String
+
+    LenValue = Me.LenValue
+    lenMask = Me.lenMask
+    sMask = Me.Mask
+
+    If Me.TextBox Is Nothing Or lenMask = 0 Then
         KeyAscii = 0
         Exit Sub
     End If
 
     Dim currentLength As Integer
-    currentLength = Me.LenValue
+    currentLength = LenValue
     Dim i           As Integer
     i = currentLength + 1
-    If i > Me.LenMask Then
+    If i > lenMask Then
         KeyAscii = 0
         Exit Sub
     End If
 
     Dim endLetter   As String
     Do
-        endLetter = VBA.Mid$(Me.Mask, i, 1)
+        endLetter = VBA.Mid$(sMask, i, 1)
         Select Case endLetter
             Case "#"
                 Call NumericValue(KeyAscii)
@@ -880,9 +999,9 @@ Private Sub KeyAsciiFixLenText(ByRef KeyAscii As MSForms.ReturnInteger)
                 Call LatinLetters(KeyAscii)
             Case "A"
                 Call AlphaNumeric(KeyAscii)
-            Case VBA.ChrW$(1041) ' Cyrillic letters
+            Case VBA.ChrW$(1041)    ' Cyrillic letters
                 Call UniCodeLetters(KeyAscii)
-            Case VBA.ChrW$(1073) ' Cyrillic letters and digits
+            Case VBA.ChrW$(1073)    ' Cyrillic letters and digits
                 Call UniCodeLettersNumeric(KeyAscii)
             Case "*"
                 ' Allow any character
@@ -890,7 +1009,7 @@ Private Sub KeyAsciiFixLenText(ByRef KeyAscii As MSForms.ReturnInteger)
                 Me.Value = Me.Value & endLetter
         End Select
         i = i + 1
-        If i > Me.LenMask Then Exit Do
+        If i > lenMask Then Exit Do
     Loop While Not haveSimvol(endLetter)
 
     Exit Sub
@@ -903,23 +1022,25 @@ Private Function haveSimvol(ByVal sVal As String) As Boolean
 End Function
 
 Private Sub NumericValue(ByRef KeyAscii As MSForms.ReturnInteger)
+    Dim sValue      As String
+    sValue = Me.Value
     Select Case KeyAscii
         Case 48 To 57:    ' ASCII codes for digits 0-9
         Case 45:
-            If Me.IsNegative Then
-                KeyAscii = IIf(Me.Value <> vbNullString, 0, 45)
+            If Me.Min < 0 Then
+                KeyAscii = IIf(sValue <> vbNullString, 0, 45)
             Else
                 KeyAscii = 0
             End If
         Case 44:
             If Me.IsDecimal Then
-                KeyAscii = IIf(InStr(1, Me.Value, ",") > 0, 0, 44)
+                KeyAscii = IIf(InStr(1, sValue, ",") > 0, 0, 44)
             Else
                 KeyAscii = 0
             End If
         Case 46:
             If Me.IsDecimal Then
-                KeyAscii = IIf(InStr(1, Me.Value, ",") > 0, 0, 44)
+                KeyAscii = IIf(InStr(1, sValue, ",") > 0, 0, 44)
             Else
                 KeyAscii = 0
             End If
@@ -991,16 +1112,24 @@ Private Function IsValidMaskInput() As Boolean
     Dim i           As Integer
     Dim maskChar    As String
     Dim inputChar   As String
+    Dim Mask        As String
+    Mask = Me.Mask
 
     ' If mask is empty, consider it valid
-    If Me.Mask = vbNullString Then
+    If Mask = vbNullString Then
         IsValidMaskInput = True
         Exit Function
     End If
 
+    Dim LenValue    As Integer
+    Dim lenMask     As Integer
+
+    LenValue = Me.LenValue
+    lenMask = Me.lenMask
+
     ' Check each character of the entered value against the mask
-    For i = 1 To Me.LenValue
-        maskChar = VBA.Mid$(Me.Mask, i, 1)
+    For i = 1 To LenValue
+        maskChar = VBA.Mid$(Mask, i, 1)
         inputChar = VBA.Mid$(Me.Value, i, 1)
 
         Select Case maskChar
@@ -1024,9 +1153,9 @@ Private Function IsValidMaskInput() As Boolean
     Next i
 
     ' If less characters have been entered than the mask length, check possible remaining characters
-    If Me.LenValue < Me.LenMask Then
-        For i = Me.LenValue + 1 To Me.LenMask
-            maskChar = VBA.Mid$(Me.Mask, i, 1)
+    If LenValue < lenMask Then
+        For i = LenValue + 1 To lenMask
+            maskChar = VBA.Mid$(Mask, i, 1)
             ' If the remaining mask characters are not fixed, consider it valid
             ' (the user can still enter valid characters)
             If InStr(1, Me.ConstSimvolsMasks, maskChar, vbBinaryCompare) > 0 Then
@@ -1055,17 +1184,31 @@ ErrorHandler:
 End Function
 
 Private Function IsValidInput() As Boolean
-    If mTextBox Is Nothing Then
+    If Me.TextBox Is Nothing Then
         IsValidInput = False
         Exit Function
     End If
 
+    Dim LenValue    As Integer
+    Dim lenMask     As Integer
+    Dim sValue      As String
+    Dim snMax       As Single
+    Dim snMin       As Single
+    Dim vValue      As Variant
+
+    LenValue = Me.LenValue
+    lenMask = Me.lenMask
+    snMax = Me.Max
+    snMin = Me.Min
+    vValue = Me.Value
+
     Select Case Me.CurrentMaskType
         Case enumTypeMask.tDateFix, enumTypeMask.tTimeFix
-            If Me.LenMask = Me.LenValue Then
+            If lenMask = LenValue Then
                 If IsDate(Me.Value) Then
-                    Me.Value = VBA.Format(VBA.CDate(Me.Value), Me.FormatValue)
-                    IsValidInput = Not (Me.Max < VBA.CDate(Me.Value) Or Me.Min > VBA.CDate(Me.Value))
+                    Me.Value = VBA.Format(VBA.CDate(vValue), Me.FormatValue)
+                    vValue = Me.Value
+                    IsValidInput = Not (snMax < VBA.CDate(vValue) Or snMin > VBA.CDate(vValue))
                 Else
                     IsValidInput = False
                 End If
@@ -1073,17 +1216,19 @@ Private Function IsValidInput() As Boolean
                 IsValidInput = False
             End If
         Case enumTypeMask.tNumeric
-            If IsNumeric(Me.Value) Then
-                IsValidInput = Not (Me.Max < Me.Value Or Me.Min > Me.Value)
+            If IsNumeric(vValue) Then
+                IsValidInput = Not (snMax < vValue Or snMin > vValue)
             Else
                 IsValidInput = False
             End If
         Case enumTypeMask.tVariableLen
             ' For variable-length masks, check that the length does not exceed the maximum
-            If Me.Max = 0 Then    ' If maximum length is not set, consider it valid
+            If snMax = 0 Then    ' If maximum length is not set, consider it valid
                 IsValidInput = True
+            ElseIf LenValue = 0 Then
+                IsValidInput = False
             Else
-                IsValidInput = (Me.LenValue <= Me.Max)
+                IsValidInput = (LenValue <= snMax)
             End If
             ' Also check mask compliance if it's specified
             If IsValidInput And Me.Mask <> vbNullString Then IsValidInput = IsValidMaskInput()
@@ -1091,21 +1236,14 @@ Private Function IsValidInput() As Boolean
             ' For regular expressions, use the appropriate validation
             IsValidInput = IsValidRegexInput()
         Case Else
-            IsValidInput = (Me.LenValue = Me.LenMask)
+            IsValidInput = (LenValue = lenMask)
     End Select
-    Call ColorContr(IsValidInput)
-End Function
-Private Sub ColorContr(ByRef Value As Boolean)
-    If Me.TextBox Is Nothing Then Exit Sub
-    Me.TextBox.BorderColor = IIf(Value, Me.BorderColorValid, Me.BorderColorInvalid)
-End Sub
+    If IsValidInput Then
+        Me.TextBox.BorderColor = Me.BorderColorValid
+    Else
+        Me.TextBox.BorderColor = Me.BorderColorInvalid
+    End If
 
-Private Function IsControlInCollection(ByVal controlName As String) As Boolean
-    Dim tempItem    As clsTextboxMask
-    On Error Resume Next
-    Set tempItem = GetItemByName(controlName)
-    On Error GoTo 0
-    If Not tempItem Is Nothing Then IsControlInCollection = True
 End Function
 
 Private Sub KeyAsciiRegex(ByRef KeyAscii As MSForms.ReturnInteger)
@@ -1140,75 +1278,90 @@ Private Sub InitializeRegex()
 ErrorHandler:
     Set mRegex = Nothing
 End Sub
-' #####################################################################################################################
+
+' ========================================================================================
 ' Procedure: UpdatePlaceholder
-' #####################################################################################################################
+' ========================================================================================
 ' Purpose:
 '   Updates the placeholder display depending on the textbox field state
-' #####################################################################################################################
-
+' ========================================================================================
 Public Sub UpdatePlaceholder()
-    If Me.LabelPlaceholder Is Nothing Then Exit Sub
- 
-    With Me.LabelPlaceholder
-        .Caption = processPlaceholderStatus()
-        If .Caption <> vbNullString Then .Caption = .Caption & " "
-        .Caption = .Caption & processPlaceholderTemplate()
-    End With
+    Call processPlaceholderStatus(Me.LabelPlaceholder)
 End Sub
 
-Private Function processPlaceholderStatus() As String
+Private Sub processPlaceholderStatus(ByRef LabelPlaceholder As MSForms.Label)
+    If LabelPlaceholder Is Nothing Then Exit Sub
+
+    Dim LenValue    As Integer
+    Dim lenMask     As Integer
     Dim currentState As String
-    If Me.LenValue = 0 Then
-        ' Field is empty
-        If Me.PlaceholderEmpty <> vbNullString Then currentState = Me.PlaceholderEmpty
-    ElseIf Me.LenValue = Me.LenMask Then
-        ' Field is completely filled
-        If IsValidInput() Then
-            If Me.PlaceholderComplete <> vbNullString Then currentState = Me.PlaceholderComplete
-        Else
-            If Me.PlaceholderInvalid <> vbNullString Then currentState = Me.PlaceholderInvalid
-        End If
-    ElseIf Me.LenValue < Me.LenMask Then
-        ' Field is partially filled
-        If IsValidInput() Then
-            If Me.PlaceholderPartial <> vbNullString Then currentState = Me.PlaceholderPartial
-        Else
-            If Me.PlaceholderInvalid <> vbNullString Then currentState = Me.PlaceholderInvalid
+    Dim currentColor As Long
+
+    LenValue = Me.LenValue
+    lenMask = Me.lenMask
+    currentColor = Me.PlaceholderEmptyColor
+
+    If IsValidInput() Then
+        currentState = Me.PlaceholderComplete
+        currentColor = Me.PlaceholderCompleteColor
+    Else
+        If LenValue = 0 Then
+            currentState = Me.PlaceholderEmpty
+            currentColor = Me.PlaceholderEmptyColor
+        ElseIf LenValue = lenMask Then
+            currentState = Me.PlaceholderInvalid
+            currentColor = Me.PlaceholderInvalidColor
+        ElseIf LenValue < lenMask Then
+            currentState = Me.PlaceholderPartial
+            currentColor = Me.PlaceholderPartialColor
         End If
     End If
-    processPlaceholderStatus = currentState
-End Function
 
-Private Function processPlaceholderTemplate() As String
+    With LabelPlaceholder
+        .ForeColor = currentColor
+        .Caption = currentState
+    End With
+    Call processPlaceholderTemplate(LabelPlaceholder)
+End Sub
+
+Private Sub processPlaceholderTemplate(ByRef LabelPlaceholder As MSForms.Label)
     Dim result      As String
     result = Me.PlaceHolderTemplate
-    If result = vbNullString Then Exit Function
+    If result = vbNullString Then Exit Sub
+
+    Dim sMask       As String
+    Dim LenValue    As Integer
+    Dim lenMask     As Integer
+
+    sMask = Me.Mask
+    LenValue = Me.LenValue
+    lenMask = Me.lenMask
 
     ' Replace markers with actual values
-    result = VBA.Replace(result, "{mask}", Me.Mask)
-    result = VBA.Replace(result, "{filled}", Me.LenValue)
-    result = VBA.Replace(result, "{remaining}", Me.LenMask - Me.LenValue)
+    result = VBA.Replace(result, "{mask}", sMask)
+    result = VBA.Replace(result, "{filled}", LenValue)
+    result = VBA.Replace(result, "{remaining}", lenMask - LenValue)
     result = VBA.Replace(result, "{holder}", Me.PlaceholderMask)
-    If Me.LenMask > 0 Then
-        result = VBA.Replace(result, "{percent}", VBA.Int((Me.LenValue / Me.LenMask) * 100) & "%")
+    result = VBA.Replace(result, "{RegexPattern}", Me.RegexPattern)
+    result = VBA.Replace(result, "{RegexFilter}", Me.RegexFilter)
+    If lenMask > 0 Then
+        result = VBA.Replace(result, "{percent}", VBA.Int((LenValue / lenMask) * 100) & "%")
     Else
         result = VBA.Replace(result, "{percent}", "0%")
     End If
 
-    processPlaceholderTemplate = result
-End Function
-
-Private Sub class_initialize()
-    mSimvolsMasks = "#*@A" & VBA.ChrW$(1041) & VBA.ChrW$(1073) ' Default mask symbols
-    mBorderColorValid = &H80000006                             ' Default valid color (usually system window text color)
-    mBorderColorInvalid = &HC0C0FF                             ' Default invalid color (light red)
-    mPlaceholderColor = &H808080                               ' Default holder color (gray)
+    With LabelPlaceholder
+        If .Caption <> vbNullString Then .Caption = .Caption & " "
+        .Caption = .Caption & result
+    End With
 End Sub
 
-Private Sub Class_Terminate()
-    Set mTextBox = Nothing
-    Set mLabelPlaceholder = Nothing
-    Set mItems = Nothing
-    Set mRegex = Nothing
+Private Sub class_initialize()
+    mSimvolsMasks = "#*@A" & VBA.ChrW$(1041) & VBA.ChrW$(1073)    ' Default mask symbols
+    mBorderColorValid = &H80000008                                ' Default valid color (usually system window text color)
+    mBorderColorInvalid = &HC0C0FF                                ' Default invalid color (light red)
+    mPlaceholderEmptyColor = rgbGray                              ' Default empty placeholder color (will use general placeholder color)
+    mPlaceholderPartialColor = rgbBrown                           ' Default partial placeholder color (will use general placeholder color)
+    mPlaceholderCompleteColor = rgbGreen                          ' Default complete placeholder color (will use general placeholder color)
+    mPlaceholderInvalidColor = rgbRed                             ' Default invalid placeholder color (will use general placeholder color)
 End Sub

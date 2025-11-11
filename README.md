@@ -15,6 +15,8 @@
 - Support for numeric values with range, sign, and decimal constraints
 - Support for variable-length text
 - Support for validation via regular expressions
+- Support for placeholder color customization based on field status
+- Support for placeholder templates with markers: {mask}, {filled}, {remaining}, {holder}, {RegexPattern}, {RegexFilter}, {percent}
 
 ## Installation
 
@@ -36,7 +38,10 @@
 | `IsDecemal` | Boolean | Whether decimal values are allowed |
 | `BorderColorValid` | Long | Border color when input is correct |
 | `BorderColorInvalid` | Long | Border color when input is incorrect |
-| `PlaceholderColor` | Long | Placeholder text color |
+| `PlaceholderEmptyColor` | Long | Placeholder text color for empty field |
+| `PlaceholderPartialColor` | Long | Placeholder text color for partially filled field |
+| `PlaceholderCompleteColor` | Long | Placeholder text color for completely filled field |
+| `PlaceholderInvalidColor` | Long | Placeholder text color for field with incorrect data |
 | `PlaceholderEmpty` | String | Placeholder text for empty field |
 | `PlaceholderPartial` | String | Placeholder text for partially filled field |
 | `PlaceholderComplete` | String | Placeholder text for completely filled field |
