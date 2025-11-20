@@ -28,8 +28,6 @@
 - [`docs/user_guide_eng.md`](docs/user_guide_eng.md) - Руководство пользователя на английском языке
 - [`docs/implementation_examples_rus.md`](docs/implementation_examples_rus.md) - Примеры реализации на русском языке
 - [`docs/implementation_examples_eng.md`](docs/implementation_examples_eng.md) - Примеры реализации на английском языке
-- [`docs/developer_guide_rus.md`](docs/developer_guide_rus.md) - Руководство для разработчиков на русском языке
-- [`docs/developer_guide_eng.md`](docs/developer_guide_eng.md) - Руководство для разработчиков на английском языке
 
 ## Установка
 

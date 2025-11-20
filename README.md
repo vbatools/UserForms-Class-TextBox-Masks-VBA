@@ -28,8 +28,6 @@ The project includes comprehensive documentation in both Russian and English in 
 - [`docs/user_guide_eng.md`](docs/user_guide_eng.md) - User guide in English
 - [`docs/implementation_examples_rus.md`](docs/implementation_examples_rus.md) - Implementation examples in Russian
 - [`docs/implementation_examples_eng.md`](docs/implementation_examples_eng.md) - Implementation examples in English
-- [`docs/developer_guide_rus.md`](docs/developer_guide_rus.md) - Developer guide in Russian
-- [`docs/developer_guide_eng.md`](docs/developer_guide_eng.md) - Developer guide in English
 
 ## Installation
 
