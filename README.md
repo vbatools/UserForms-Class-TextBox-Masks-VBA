@@ -1,6 +1,6 @@
 # VBA TextBox Masks Class
 
-**clsTextboxMask** is a powerful VBA class that allows creating text fields with input masks in Excel and other Office applications. It provides input validation, placeholder display, and visual indication of field fill status.
+**clsTextboxMask** is a powerful VBA class that allows creating textboxes with input masks in Excel and other Office applications. It provides input validation, placeholder display, and visual indication of field fill status.
 
 ## Screenshots
 
@@ -10,32 +10,45 @@
 
 - Support for various input mask types (numbers, dates, time, text, regular expressions)
 - Real-time input validation
-- Display of placeholders with different statuses (empty, partially filled, completely filled, incorrect)
+- Display of placeholders with different statuses (empty, partially filled, completely filled, invalid)
 - Visual indication of input correctness through border color
-- Support for numeric values with range, sign, and decimal constraints
-- Support for variable-length text
+- Support for numeric values with range, sign and decimal restrictions
+- Support for variable length text
 - Support for validation via regular expressions
 - Support for placeholder color customization based on field status
 - Support for placeholder templates with markers: {mask}, {filled}, {remaining}, {holder}, {RegexPattern}, {RegexFilter}, {percent}
+
+## Documentation
+
+The project includes comprehensive documentation in both Russian and English in the `docs/` directory:
+
+- [`docs/technical_documentation_rus.md`](docs/technical_documentation_rus.md) - Technical documentation in Russian
+- [`docs/technical_documentation_eng.md`](docs/technical_documentation_eng.md) - Technical documentation in English
+- [`docs/user_guide_rus.md`](docs/user_guide_rus.md) - User guide in Russian
+- [`docs/user_guide_eng.md`](docs/user_guide_eng.md) - User guide in English
+- [`docs/implementation_examples_rus.md`](docs/implementation_examples_rus.md) - Implementation examples in Russian
+- [`docs/implementation_examples_eng.md`](docs/implementation_examples_eng.md) - Implementation examples in English
+- [`docs/developer_guide_rus.md`](docs/developer_guide_rus.md) - Developer guide in Russian
+- [`docs/developer_guide_eng.md`](docs/developer_guide_eng.md) - Developer guide in English
 
 ## Installation
 
 1. Copy the `clsTextboxMask.cls` file to your VBA project
 2. Use the class in your UserForms
 
-## Main Properties
+## Core Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `TextBox` | MSForms.TextBox | Reference to the text box to which the mask is applied |
+| `TextBox` | MSForms.TextBox | Reference to the textbox field to which the mask is applied |
 | `LabelPlaceholder` | MSForms.Label | Reference to the placeholder label that displays hints |
-| `Mask` | String | Input mask defining allowed characters |
-| `Value` | String | Current value of the text field |
-| `CurrentMaskType` | enumTypeMask | Type of current mask |
+| `Mask` | String | Input mask that defines allowed characters |
+| `Value` | String | Current value of the textbox field |
+| `CurrentMaskType` | enumTypeMask | Type of the current mask |
 | `Min` | Single | Minimum value for numeric fields |
 | `Max` | Single | Maximum value for numeric fields |
-| `IsNegative` | Boolean | Whether negative values are allowed |
-| `IsDecemal` | Boolean | Whether decimal values are allowed |
+| `IsNegative` | Boolean | Are negative values allowed |
+| `IsDecemal` | Boolean | Are decimal values allowed |
 | `BorderColorValid` | Long | Border color when input is correct |
 | `BorderColorInvalid` | Long | Border color when input is incorrect |
 | `PlaceholderEmptyColor` | Long | Placeholder text color for empty field |
@@ -52,15 +65,15 @@
 The class supports the following mask types:
 
 | Mask Type | Value | Description |
-|-----------|-------|-------------|
+|-----------|-------------|
 | `tOtherFix` | 1 | Fixed mask with various characters |
 | `tDateFix` | 2 | Fixed mask for dates |
 | `tTimeFix` | 3 | Fixed mask for time |
 | `tNumeric` | 4 | Numeric mask with range limitation capability |
-| `tVariableLen` | 5 | Variable-length mask |
+| `tVariableLen` | 5 | Variable length mask |
 | `tRegex` | 6 | Regular expression-based mask |
 
-## Main Methods
+## Core Methods
 
 ### `AddFieldNumeric`
 Adds a numeric field with specified validation parameters.
@@ -75,20 +88,20 @@ Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
 ```
 
 **Parameters:**
-- `inputTextBox` - text field to which the mask is applied
+- `inputTextBox` - textbox field to which the mask is applied
 - `minValue` - minimum allowed value
 - `maxValue` - maximum allowed value
-- `allowDecimal` - permission for decimal values input
-- `allowNegative` - permission for negative values input
-- `showPlaceholder` - placeholder display (optional)
+- `allowDecimal` - allow input of decimal values
+- `allowNegative` - allow input of negative values
+- `showPlaceholder` - show placeholder (optional)
 - `numberFormat` - number display format (optional)
-- `BorderColorValid` - border color when input is correct (optional)
-- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `BorderColorValid` - border color for correct input (optional)
+- `BorderColorInvalid` - border color for incorrect input (optional)
 - `PlaceholderColor` - placeholder color (optional)
 - `PlaceholderEmpty` - placeholder text for empty field (optional)
 - `PlaceholderPartial` - placeholder text for partially filled field (optional)
 - `PlaceholderComplete` - placeholder text for completely filled field (optional)
-- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceholderInvalid` - placeholder text for field with invalid data (optional)
 - `PlaceHolderTemplete` - placeholder template (optional)
 
 ### `AddFieldDate`
@@ -104,19 +117,19 @@ Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
 ```
 
 **Parameters:**
-- `inputTextBox` - text field to which the mask is applied
+- `inputTextBox` - textbox field to which the mask is applied
 - `dateMask` - date input mask
 - `minDate` - minimum allowed date
 - `maxDate` - maximum allowed date
 - `dateFormat` - date display format (optional)
-- `showPlaceholder` - placeholder display (optional)
-- `BorderColorValid` - border color when input is correct (optional)
-- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `showPlaceholder` - show placeholder (optional)
+- `BorderColorValid` - border color for correct input (optional)
+- `BorderColorInvalid` - border color for incorrect input (optional)
 - `PlaceholderColor` - placeholder color (optional)
 - `PlaceholderEmpty` - placeholder text for empty field (optional)
 - `PlaceholderPartial` - placeholder text for partially filled field (optional)
 - `PlaceholderComplete` - placeholder text for completely filled field (optional)
-- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceholderInvalid` - placeholder text for field with invalid data (optional)
 - `PlaceHolderTemplete` - placeholder template (optional)
 
 ### `AddFieldTime`
@@ -132,23 +145,23 @@ Call timeField.AddFieldTime(inputTextBox:=Me.TextBox3, _
 ```
 
 **Parameters:**
-- `inputTextBox` - text field to which the mask is applied
+- `inputTextBox` - textbox field to which the mask is applied
 - `timeMask` - time input mask
 - `minTime` - minimum allowed time
 - `maxTime` - maximum allowed time
 - `timeFormat` - time display format (optional)
-- `showPlaceholder` - placeholder display (optional)
-- `BorderColorValid` - border color when input is correct (optional)
-- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `showPlaceholder` - show placeholder (optional)
+- `BorderColorValid` - border color for correct input (optional)
+- `BorderColorInvalid` - border color for incorrect input (optional)
 - `PlaceholderColor` - placeholder color (optional)
 - `PlaceholderEmpty` - placeholder text for empty field (optional)
 - `PlaceholderPartial` - placeholder text for partially filled field (optional)
 - `PlaceholderComplete` - placeholder text for completely filled field (optional)
-- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceholderInvalid` - placeholder text for field with invalid data (optional)
 - `PlaceHolderTemplete` - placeholder template (optional)
 
 ### `AddFieldText`
-Adds a text field with a specified input mask.
+Adds a text field with specified input mask.
 
 ```vba
 Dim textField As New clsTextboxMask
@@ -157,16 +170,16 @@ Call textField.AddFieldText(inputTextBox:=Me.TextBox4, _
 ```
 
 **Parameters:**
-- `inputTextBox` - text field to which the mask is applied
+- `inputTextBox` - textbox field to which the mask is applied
 - `textMask` - text input mask
-- `showPlaceholder` - placeholder display (optional)
-- `BorderColorValid` - border color when input is correct (optional)
-- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `showPlaceholder` - show placeholder (optional)
+- `BorderColorValid` - border color for correct input (optional)
+- `BorderColorInvalid` - border color for incorrect input (optional)
 - `PlaceholderColor` - placeholder color (optional)
 - `PlaceholderEmpty` - placeholder text for empty field (optional)
 - `PlaceholderPartial` - placeholder text for partially filled field (optional)
 - `PlaceholderComplete` - placeholder text for completely filled field (optional)
-- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceholderInvalid` - placeholder text for field with invalid data (optional)
 - `PlaceHolderTemplete` - placeholder template (optional)
 
 ### `AddFieldVariableLength`
@@ -180,17 +193,17 @@ Call varField.AddFieldVariableLength(inputTextBox:=Me.TextBox5, _
 ```
 
 **Parameters:**
-- `inputTextBox` - text field to which the mask is applied
+- `inputTextBox` - textbox field to which the mask is applied
 - `maxLength` - maximum text length
 - `textMask` - text input mask (optional)
-- `showPlaceholder` - placeholder display (optional)
-- `BorderColorValid` - border color when input is correct (optional)
-- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `showPlaceholder` - show placeholder (optional)
+- `BorderColorValid` - border color for correct input (optional)
+- `BorderColorInvalid` - border color for incorrect input (optional)
 - `PlaceholderColor` - placeholder color (optional)
 - `PlaceholderEmpty` - placeholder text for empty field (optional)
 - `PlaceholderPartial` - placeholder text for partially filled field (optional)
 - `PlaceholderComplete` - placeholder text for completely filled field (optional)
-- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceholderInvalid` - placeholder text for field with invalid data (optional)
 - `PlaceHolderTemplete` - placeholder template (optional)
 
 ### `AddFieldRegex`
@@ -204,21 +217,21 @@ Call regexField.AddFieldRegex(inputTextBox:=Me.TextBox6, _
 ```
 
 **Parameters:**
-- `inputTextBox` - text field to which the mask is applied
+- `inputTextBox` - textbox field to which the mask is applied
 - `RegexPattern` - regular expression pattern for validation
 - `RegexFilter` - regular expression filter
-- `showPlaceholder` - placeholder display (optional)
-- `BorderColorValid` - border color when input is correct (optional)
-- `BorderColorInvalid` - border color when input is incorrect (optional)
+- `showPlaceholder` - show placeholder (optional)
+- `BorderColorValid` - border color for correct input (optional)
+- `BorderColorInvalid` - border color for incorrect input (optional)
 - `PlaceholderColor` - placeholder color (optional)
 - `PlaceholderEmpty` - placeholder text for empty field (optional)
 - `PlaceholderPartial` - placeholder text for partially filled field (optional)
 - `PlaceholderComplete` - placeholder text for completely filled field (optional)
-- `PlaceholderInvalid` - placeholder text for field with incorrect data (optional)
+- `PlaceholderInvalid` - placeholder text for field with invalid data (optional)
 - `PlaceHolderTemplete` - placeholder template (optional)
 
 ### `IsValid`
-Checks the correctness of data entered in the text field.
+Checks the correctness of the entered data in the textbox field.
 
 ```vba
 If myField.IsValid() Then
@@ -229,21 +242,21 @@ End If
 ```
 
 ### `Clear`
-Clears the text field.
+Clears the textbox field.
 
 ```vba
 myField.Clear()
 ```
 
 ### `SetFocus`
-Sets focus to the text field.
+Sets focus on the textbox field.
 
 ```vba
 myField.SetFocus()
 ```
 
 ### `RemoveItem`
-Removes the text box mask item and associated components.
+Removes the textbox mask element and related components.
 
 ```vba
 myField.RemoveItem()
@@ -279,7 +292,7 @@ Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
 Dim dateField As New clsTextboxMask
 Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
                            dateMask:="##.##.####", _
-                           minDate:=#1/2020#, _
+                           minDate:=#1/1/2020#, _
                            maxDate:=#12/31/2030#, _
                            dateFormat:="dd.mm.yyyy")
 ```
@@ -295,8 +308,8 @@ Call textField.AddFieldText(inputTextBox:=Me.TextBox3, _
 
 - MSForms.TextBox
 - MSForms.Label
-- VBScript.RegExp (for regular expression validation)
+- VBScript.RegExp (for validation via regular expressions)
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+Project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

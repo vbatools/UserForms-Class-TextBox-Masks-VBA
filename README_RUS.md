@@ -18,9 +18,22 @@
 - Поддержка настройки цвета плейсхолдера в зависимости от статуса поля
 - Поддержка шаблонов плейсхолдера с маркерами: {mask}, {filled}, {remaining}, {holder}, {RegexPattern}, {RegexFilter}, {percent}
 
+## Документация
+
+В проекте доступна подробная документация на русском и английском языках в каталоге `docs/`:
+
+- [`docs/technical_documentation_rus.md`](docs/technical_documentation_rus.md) - Техническая документация на русском языке
+- [`docs/technical_documentation_eng.md`](docs/technical_documentation_eng.md) - Техническая документация на английском языке
+- [`docs/user_guide_rus.md`](docs/user_guide_rus.md) - Руководство пользователя на русском языке
+- [`docs/user_guide_eng.md`](docs/user_guide_eng.md) - Руководство пользователя на английском языке
+- [`docs/implementation_examples_rus.md`](docs/implementation_examples_rus.md) - Примеры реализации на русском языке
+- [`docs/implementation_examples_eng.md`](docs/implementation_examples_eng.md) - Примеры реализации на английском языке
+- [`docs/developer_guide_rus.md`](docs/developer_guide_rus.md) - Руководство для разработчиков на русском языке
+- [`docs/developer_guide_eng.md`](docs/developer_guide_eng.md) - Руководство для разработчиков на английском языке
+
 ## Установка
 
-1. Скопируйте файл `clsTextboxMask.cls` в ваш проект VBA
+1. Скопируйте файл `clsTextboxMask.cls` ваш проект VBA
 2. Используйте класс в ваших UserForms
 
 ## Основные свойства
