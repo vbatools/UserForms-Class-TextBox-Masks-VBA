@@ -77,7 +77,8 @@ The class supports the following mask types:
 Adds a numeric field with specified validation parameters.
 
 ```vba
-Dim numField As New clsTextboxMask
+Dim numField As clsTextboxMask
+Set numField = New clsTextboxMask
 Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
                              minValue:=0, _
                              maxValue:=100, _
@@ -106,7 +107,8 @@ Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
 Adds a date input field with specified validation parameters.
 
 ```vba
-Dim dateField As New clsTextboxMask
+Dim dateField As clsTextboxMask
+Set dateField = New clsTextboxMask
 Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
                            dateMask:="##.##.####", _
                            minDate:=#1/1/2020#, _
@@ -134,7 +136,8 @@ Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
 Adds a time input field with specified validation parameters.
 
 ```vba
-Dim timeField As New clsTextboxMask
+Dim timeField As clsTextboxMask
+Set timeField = New clsTextboxMask
 Call timeField.AddFieldTime(inputTextBox:=Me.TextBox3, _
                            timeMask:="##:##", _
                            minTime:=#0:00:00#, _
@@ -162,7 +165,8 @@ Call timeField.AddFieldTime(inputTextBox:=Me.TextBox3, _
 Adds a text field with specified input mask.
 
 ```vba
-Dim textField As New clsTextboxMask
+Dim textField As clsTextboxMask
+Set textField = New clsTextboxMask
 Call textField.AddFieldText(inputTextBox:=Me.TextBox4, _
                            textMask:="+7(*##) @# A# #Б#")  ' Letters-digits
 ```
@@ -184,7 +188,8 @@ Call textField.AddFieldText(inputTextBox:=Me.TextBox4, _
 Adds a field with variable text length.
 
 ```vba
-Dim varField As New clsTextboxMask
+Dim varField As clsTextboxMask
+Set varField = New clsTextboxMask
 Call varField.AddFieldVariableLength(inputTextBox:=Me.TextBox5, _
                                     maxLength:=10, _
                                     textMask:="##")
@@ -208,7 +213,8 @@ Call varField.AddFieldVariableLength(inputTextBox:=Me.TextBox5, _
 Adds a field with validation via regular expression.
 
 ```vba
-Dim regexField As New clsTextboxMask
+Dim regexField As clsTextboxMask
+Set regexField = New clsTextboxMask
 Call regexField.AddFieldRegex(inputTextBox:=Me.TextBox6, _
                              RegexPattern:="^[A-Z]{2}\d{4}$", _
                              RegexFilter:="[A-Z0-9]")
@@ -277,7 +283,8 @@ When creating text masks, the following symbols are used:
 
 ### 1. Numeric field with constraints:
 ```vba
-Dim numField As New clsTextboxMask
+Dim numField As clsTextboxMask
+Set numField = New clsTextboxMask
 Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
                              minValue:=0, _
                              maxValue:=100, _
@@ -287,7 +294,8 @@ Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
 
 ### 2. Date field:
 ```vba
-Dim dateField As New clsTextboxMask
+Dim dateField As clsTextboxMask
+Set dateField = New clsTextboxMask
 Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
                            dateMask:="##.##.####", _
                            minDate:=#1/1/2020#, _
@@ -297,7 +305,8 @@ Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
 
 ### 3. Text field with mask:
 ```vba
-Dim textField As New clsTextboxMask
+Dim textField As clsTextboxMask
+Set textField = New clsTextboxMask
 Call textField.AddFieldText(inputTextBox:=Me.TextBox3, _
                            textMask:="+7(*##) @# A# #Б#")  ' Letters-digits
 ```

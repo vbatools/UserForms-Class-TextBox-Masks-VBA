@@ -24,7 +24,8 @@ The `clsTextboxMask` class provides a powerful tool for creating textboxes with 
 Create a UserForm and add a TextBox to it. Then use the following code:
 
 ```vba
-Dim maskField As New clsTextboxMask
+Dim maskField As clsTextboxMask
+Set maskField = New clsTextboxMask
 Call maskField.AddFieldText(Me.TextBox1, "###-##-##")
 ```
 
@@ -33,7 +34,8 @@ This code will create a field for entering a phone number in the format "123-45-
 ### Numeric Field Example
 
 ```vba
-Dim numField As New clsTextboxMask
+Dim numField As clsTextboxMask
+Set numField = New clsTextboxMask
 Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
                              minValue:=0, _
                              maxValue:=100, _
@@ -46,7 +48,8 @@ Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim dateField As New clsTextboxMask
+    Dim dateField As clsTextboxMask
+    Set dateField = New clsTextboxMask
     Call dateField.AddFieldDate(inputTextBox:=Me.TextBoxDate, _
                                dateMask:="##.##.####", _
                                minDate:=#1/1/2020#, _
@@ -61,7 +64,8 @@ This code creates a date input field in the format "dd.mm.yyyy" with a date rang
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim timeField As New clsTextboxMask
+    Dim timeField As clsTextboxMask
+    Set timeField = New clsTextboxMask
     Call timeField.AddFieldTime(inputTextBox:=Me.TextBoxTime, _
                                timeMask:="##:##", _
                                minTime:=#0:00:00#, _
@@ -76,7 +80,8 @@ This code creates a time input field in the format "hh:mm".
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim phoneField As New clsTextboxMask
+    Dim phoneField As clsTextboxMask
+    Set phoneField = New clsTextboxMask
     Call phoneField.AddFieldText(inputTextBox:=Me.TextBoxPhone, _
                                 textMask:="+7(###) ###-##-##")
 End Sub
@@ -88,7 +93,8 @@ This code creates a field for entering a Russian phone number with automatic for
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim numField As New clsTextboxMask
+    Dim numField As clsTextboxMask
+    Set numField = New clsTextboxMask
     Call numField.AddFieldNumeric(inputTextBox:=Me.TextBoxNumber, _
                                  minValue:=-10, _
                                  maxValue:=100, _
@@ -102,7 +108,8 @@ This code creates a field for entering numbers from -10 to 100, including decima
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim varField As New clsTextboxMask
+    Dim varField As clsTextboxMask
+    Set varField = New clsTextboxMask
     Call varField.AddFieldVariableLength(inputTextBox:=Me.TextBoxName, _
                                         maxLength:=50)
 End Sub
@@ -114,7 +121,8 @@ This code creates a text input field with a maximum length of 50 characters.
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim emailField As New clsTextboxMask
+    Dim emailField As clsTextboxMask
+    Set emailField = New clsTextboxMask
     Call emailField.AddFieldRegex(inputTextBox:=Me.TextBoxEmail, _
                                  RegexPattern:="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", _
                                  RegexFilter:="[a-zA-Z0-9._%+-@]")
@@ -129,7 +137,8 @@ This code creates an email input field with validation via regular expression.
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim field As New clsTextboxMask
+    Dim field As clsTextboxMask
+    Set field = New clsTextboxMask
     Call field.AddFieldText(inputTextBox:=Me.TextBox1, _
                            textMask:="###-###", _
                            BorderColorValid:=RGB(0, 128, 0), _
@@ -141,7 +150,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim field As New clsTextboxMask
+    Dim field As clsTextboxMask
+    Set field = New clsTextboxMask
     Call field.AddFieldText(inputTextBox:=Me.TextBox1, _
                            textMask:="###-###", _
                            PlaceholderEmpty:="Enter code", _
@@ -157,7 +167,8 @@ The class allows managing multiple fields simultaneously:
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim formMasks As New clsTextboxMask
+    Dim formMasks As clsTextboxMask
+    Set formMasks = New clsTextboxMask
     
     ' Adding multiple fields
     Call formMasks.AddFieldText(Me.TextBox1, "###-##-##")
@@ -276,7 +287,8 @@ End If
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim formMasks As New clsTextboxMask
+    Dim formMasks As clsTextboxMask
+    Set formMasks = New clsTextboxMask
     
     ' Email field
     Call formMasks.AddFieldRegex(Me.TextBoxEmail, _

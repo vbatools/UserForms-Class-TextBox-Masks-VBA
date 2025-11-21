@@ -362,7 +362,8 @@ The class automatically handles textbox events:
 
 ### 1. Numeric field with constraints:
 ```vba
-Dim numField As New clsTextboxMask
+Dim numField As clsTextboxMask
+Set numField = New clsTextboxMask
 Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
                              minValue:=0, _
                              maxValue:=100, _
@@ -371,7 +372,8 @@ Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
 
 ### 2. Date field:
 ```vba
-Dim dateField As New clsTextboxMask
+Dim dateField As clsTextboxMask
+Set dateField = New clsTextboxMask
 Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
                            dateMask:="##.##.####", _
                            minDate:=#1/1/2020#, _
@@ -381,14 +383,16 @@ Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
 
 ### 3. Text field with mask:
 ```vba
-Dim textField As New clsTextboxMask
+Dim textField As clsTextboxMask
+Set textField = New clsTextboxMask
 Call textField.AddFieldText(inputTextBox:=Me.TextBox3, _
                            textMask:="+7(*##) @# A# #Б#")  ' Letters-digits
 ```
 
 ### 4. Regular expression field:
 ```vba
-Dim regexField As New clsTextboxMask
+Dim regexField As clsTextboxMask
+Set regexField = New clsTextboxMask
 Call regexField.AddFieldRegex(inputTextBox:=Me.TextBox6, _
                              RegexPattern:="^[A-Z]{2}\d{4}$", _
                              RegexFilter:="[A-Z0-9]")

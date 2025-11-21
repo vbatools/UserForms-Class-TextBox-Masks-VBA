@@ -24,7 +24,8 @@
 Создайте UserForm и добавьте на него TextBox. Затем используйте следующий код:
 
 ```vba
-Dim maskField As New clsTextboxMask
+Dim maskField As clsTextboxMask
+Set maskField = New clsTextboxMask
 Call maskField.AddFieldText(Me.TextBox1, "###-##-##")
 ```
 
@@ -33,7 +34,8 @@ Call maskField.AddFieldText(Me.TextBox1, "###-##-##")
 ### Пример с числовым полем
 
 ```vba
-Dim numField As New clsTextboxMask
+Dim numField As clsTextboxMask
+Set numField = New clsTextboxMask
 Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
                              minValue:=0, _
                              maxValue:=100, _
@@ -46,7 +48,8 @@ Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim dateField As New clsTextboxMask
+    Dim dateField As clsTextboxMask
+    Set dateField = New clsTextboxMask
     Call dateField.AddFieldDate(inputTextBox:=Me.TextBoxDate, _
                                dateMask:="##.##.####", _
                                minDate:=#1/1/2020#, _
@@ -61,7 +64,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim timeField As New clsTextboxMask
+    Dim timeField As clsTextboxMask
+    Set timeField = New clsTextboxMask
     Call timeField.AddFieldTime(inputTextBox:=Me.TextBoxTime, _
                                timeMask:="##:##", _
                                minTime:=#0:00:00#, _
@@ -76,7 +80,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim phoneField As New clsTextboxMask
+    Dim phoneField As clsTextboxMask
+    Set phoneField = New clsTextboxMask
     Call phoneField.AddFieldText(inputTextBox:=Me.TextBoxPhone, _
                                 textMask:="+7(###) ###-##-##")
 End Sub
@@ -88,7 +93,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim numField As New clsTextboxMask
+    Dim numField As clsTextboxMask
+    Set numField = New clsTextboxMask
     Call numField.AddFieldNumeric(inputTextBox:=Me.TextBoxNumber, _
                                  minValue:=-10, _
                                  maxValue:=100, _
@@ -102,7 +108,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim varField As New clsTextboxMask
+    Dim varField As clsTextboxMask
+    Set varField = New clsTextboxMask
     Call varField.AddFieldVariableLength(inputTextBox:=Me.TextBoxName, _
                                         maxLength:=50)
 End Sub
@@ -114,7 +121,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim emailField As New clsTextboxMask
+    Dim emailField As clsTextboxMask
+    Set emailField = New clsTextboxMask
     Call emailField.AddFieldRegex(inputTextBox:=Me.TextBoxEmail, _
                                  RegexPattern:="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", _
                                  RegexFilter:="[a-zA-Z0-9._%+-@]")
@@ -129,7 +137,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim field As New clsTextboxMask
+    Dim field As clsTextboxMask
+    Set field = New clsTextboxMask
     Call field.AddFieldText(inputTextBox:=Me.TextBox1, _
                            textMask:="###-###", _
                            BorderColorValid:=RGB(0, 128, 0), _
@@ -141,7 +150,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim field As New clsTextboxMask
+    Dim field As clsTextboxMask
+    Set field = New clsTextboxMask
     Call field.AddFieldText(inputTextBox:=Me.TextBox1, _
                            textMask:="###-###", _
                            PlaceholderEmpty:="Введите код", _
@@ -157,7 +167,8 @@ End Sub
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim formMasks As New clsTextboxMask
+    Dim formMasks As clsTextboxMask
+    Set formMasks = New clsTextboxMask
     
     ' Добавляем несколько полей
     Call formMasks.AddFieldText(Me.TextBox1, "###-##-##")
@@ -276,7 +287,8 @@ End If
 
 ```vba
 Private Sub UserForm_Initialize()
-    Dim formMasks As New clsTextboxMask
+    Dim formMasks As clsTextboxMask
+    Set formMasks = New clsTextboxMask
     
     ' Поле для email
     Call formMasks.AddFieldRegex(Me.TextBoxEmail, _
