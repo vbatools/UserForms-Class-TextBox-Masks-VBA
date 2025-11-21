@@ -1,5 +1,15 @@
 # Technical Documentation for clsTextboxMask
 
+## Table of Contents
+1. [Class Overview](#class-overview)
+2. [Class Architecture](#class-architecture)
+3. [Properties](#properties)
+4. [Methods](#methods)
+5. [Events](#events)
+6. [Constants and Enumerations](#constants-and-enumerations)
+7. [Implementation Details](#implementation-details)
+8. [Dependencies](#dependencies)
+
 ## Class Overview
 
 The `clsTextboxMask` class is a powerful VBA tool that allows creating textboxes with input masks in Excel and other Office applications. It provides input validation, placeholder display, and visual indication of field fill status.
@@ -49,7 +59,41 @@ Defines the types of supported masks:
 | `PlaceholderComplete` | String | Placeholder text for completely filled field |
 | `PlaceholderInvalid` | String | Placeholder text for field with incorrect data |
 
-## Detailed Method Descriptions
+## Properties
+
+### Core Properties
+- `TextBox` - Gets or sets the textbox field to which the mask is applied
+- `LabelPlaceholder` - Gets or sets the placeholder label that displays hints
+- `Mask` - Gets or sets the input mask that defines allowed characters
+- `Value` - Gets or sets the current value of the textbox field
+- `CurrentMaskType` - Gets or sets the type of the current mask
+- `Min` - Gets or sets the minimum value for numeric fields
+- `Max` - Gets or sets the maximum value for numeric fields
+- `IsDecimal` - Gets or sets whether decimal values are allowed
+- `BorderColorValid` - Gets or sets the border color when input is correct
+- `BorderColorInvalid` - Gets or sets the border color when input is incorrect
+- `PlaceholderEmptyColor` - Gets or sets the placeholder text color for empty field
+- `PlaceholderPartialColor` - Gets or sets the placeholder text color for partially filled field
+- `PlaceholderCompleteColor` - Gets or sets the placeholder text color for completely filled field
+- `PlaceholderInvalidColor` - Gets or sets the placeholder text color for field with incorrect data
+- `PlaceholderEmpty` - Gets or sets the placeholder text for empty field
+- `PlaceholderPartial` - Gets or sets the placeholder text for partially filled field
+- `PlaceholderComplete` - Gets or sets the placeholder text for completely filled field
+- `PlaceholderInvalid` - Gets or sets the placeholder text for field with incorrect data
+
+### Additional Properties
+- `PlaceholderMask` - Gets the current placeholder mask showing remaining characters to be filled
+- `PlaceHolderTemplate` - Gets or sets the placeholder template with markers
+- `VisibleLabelPlaceholder` - Gets or sets the visibility of the placeholder label
+- `Items` - Gets the collection of all textbox mask items
+- `Count` - Gets the number of items in the collection
+- `RemainingChars` - Gets the number of remaining characters to fill
+- `FormatValue` - Gets or sets the format for displaying the value
+- `LenValue` - Gets the length of the current value
+- `lenMask` - Gets the length of the mask
+- `Version` - Gets version information about the class
+
+## Methods
 
 ### AddFieldNumeric
 Adds a numeric field with specified validation parameters.
@@ -328,8 +372,33 @@ Removes the textbox mask element and related components.
 Public Sub RemoveItem()
 ```
 
-## Mask Symbols
+## Events
 
+### mTextBox_Change
+Event raised when the textbox value changes.
+
+### mTextBox_KeyPress
+Event raised when a key is pressed in the textbox.
+
+## Constants and Enumerations
+
+### enumTypeMask
+```vba
+Public Enum enumTypeMask
+    tOtherFix = 1
+    tDateFix
+    tTimeFix
+    tNumeric
+    tVariableLen
+    tRegex
+    [_First] = tOtherFix
+    [_Last] = tRegex
+End Enum
+```
+
+## Implementation Details
+
+### Mask Symbols
 When creating text masks, the following symbols are used:
 
 | Symbol | Description |
@@ -341,8 +410,7 @@ When creating text masks, the following symbols are used:
 | `б` | Cyrillic letters and digits |
 | `*` | Any characters |
 
-## Placeholder Templates
-
+### Placeholder Templates
 The class supports the use of markers in placeholder templates:
 - `{mask}` - displays the mask
 - `{filled}` - number of filled characters
@@ -352,61 +420,10 @@ The class supports the use of markers in placeholder templates:
 - `{RegexFilter}` - regular expression filter
 - `{percent}` - fill percentage
 
-## Event Handling
-
+### Event Handling
 The class automatically handles textbox events:
 - `Change` - updates placeholder and checks validity
 - `KeyPress` - controls input characters according to the mask
-
-## Usage Examples
-
-### 1. Numeric field with constraints:
-```vba
-Dim numField As clsTextboxMask
-Set numField = New clsTextboxMask
-Call numField.AddFieldNumeric(inputTextBox:=Me.TextBox1, _
-                             minValue:=0, _
-                             maxValue:=100, _
-                             allowDecimal:=True)
-```
-
-### 2. Date field:
-```vba
-Dim dateField As clsTextboxMask
-Set dateField = New clsTextboxMask
-Call dateField.AddFieldDate(inputTextBox:=Me.TextBox2, _
-                           dateMask:="##.##.####", _
-                           minDate:=#1/1/2020#, _
-                           maxDate:=#12/31/2030#, _
-                           dateFormat:="dd.mm.yyyy")
-```
-
-### 3. Text field with mask:
-```vba
-Dim textField As clsTextboxMask
-Set textField = New clsTextboxMask
-Call textField.AddFieldText(inputTextBox:=Me.TextBox3, _
-                           textMask:="+7(*##) @# A# #Б#")  ' Letters-digits
-```
-
-### 4. Regular expression field:
-```vba
-Dim regexField As clsTextboxMask
-Set regexField = New clsTextboxMask
-Call regexField.AddFieldRegex(inputTextBox:=Me.TextBox6, _
-                             RegexPattern:="^[A-Z]{2}\d{4}$", _
-                             RegexFilter:="[A-Z0-9]")
-```
-
-## Internal Implementation
-
-The class uses an Items collection to store all created mask elements. Each element is associated with a textbox and has its own validation and display settings.
-
-When the class is initialized, default values are set:
-- `mSimvolsMasks = "#*@A" & VBA.ChrW$(1041) & VBA.ChrW$(1073)` - mask symbols
-- `mBorderColorValid = &H800008` - border color for correct input
-- `mBorderColorInvalid = &HC0C0FF` - border color for incorrect input
-- Placeholder colors for different statuses
 
 ## Dependencies
 
